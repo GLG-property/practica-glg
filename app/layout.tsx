@@ -7,8 +7,11 @@ export const metadata: Metadata = {
   description: "Aplicație de management pentru școala auto GLG Property",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/icon-192.png",
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
   appleWebApp: {
     capable: true,

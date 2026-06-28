@@ -54,9 +54,8 @@ export function LoginClient() {
     <main className="min-h-screen flex flex-col items-center px-4 py-10">
       <div className="w-full max-w-sm flex items-center justify-between mb-8">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-white text-sm font-bold">
-            GLG
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="GLG Property" className="h-10 w-10 object-contain" />
           <h1 className="text-lg font-bold text-slate-900">{d.appName}</h1>
         </div>
         <div className="flex gap-0.5 rounded-lg bg-slate-100 p-0.5">
