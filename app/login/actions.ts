@@ -15,7 +15,9 @@ export type LoginResult =
   | { ok: true; role: UserRole }
   | { ok: false; reason: "wrong"; attemptsLeft: number }
   | { ok: false; reason: "locked"; minutes: number }
-  | { ok: false; reason: "invalid" };
+  | { ok: false; reason: "invalid" }
+  | { ok: false; reason: "config" } // lipsesc variabilele de mediu pe server
+  | { ok: false; reason: "error" };
 
 const schema = z.object({
   role: z.enum(["admin", "operator", "instructor"]),
@@ -40,6 +42,25 @@ export async function loginAction(input: { role: UserRole; code: string }): Prom
   const { role, code } = parsed.data;
   if (!isValidCodeFormat(code, role)) return { ok: false, reason: "invalid" };
 
+  // Configurare server: dacă lipsesc variabilele de mediu, spunem clar (nu eroare generică).
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    !process.env.SESSION_SECRET ||
+    process.env.SESSION_SECRET.length < 16
+  ) {
+    return { ok: false, reason: "config" };
+  }
+
+  try {
+    return await doLogin(role, code);
+  } catch (err) {
+    console.error("[loginAction]", err);
+    return { ok: false, reason: "error" };
+  }
+}
+
+async function doLogin(role: UserRole, code: string): Promise<LoginResult> {
   const supabase = getAdminClient();
   const ip = await clientIp();
 

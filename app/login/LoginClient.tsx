@@ -38,6 +38,10 @@ export function LoginClient() {
       }
       if (res.reason === "wrong") setError(fmt(d.login.wrongCode, { n: res.attemptsLeft }));
       else if (res.reason === "locked") setError(fmt(d.login.locked, { min: res.minutes }));
+      else if (res.reason === "config")
+        setError(
+          "Configurare server incompletă: lipsesc variabilele de mediu (SUPABASE_* / SESSION_SECRET) în Vercel."
+        );
       else setError(d.common.error);
     } catch {
       setError(d.common.error);
