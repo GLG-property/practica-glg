@@ -1,35 +1,35 @@
 "use client";
 
+import type { IconType } from "react-icons";
 import {
-  House,
-  CalendarBlank,
-  Users,
-  GearSix,
-  Car,
-  Phone,
-  ChatCircleText,
-  Plus,
-  Check,
-  X,
-  CaretLeft,
-  CaretRight,
-  MagnifyingGlass,
-  SignOut,
-  SquaresFour,
-  Bell,
-  Clock,
-  LinkSimple,
-  DownloadSimple,
-  Warning,
-  PencilSimple,
-  FileText,
-  ClockCounterClockwise,
-  type Icon as PhosphorIcon,
-  type IconWeight,
-} from "@phosphor-icons/react";
+  RiHome5Fill,
+  RiCalendarFill,
+  RiGroupFill,
+  RiSettings3Fill,
+  RiCarFill,
+  RiPhoneFill,
+  RiChat3Fill,
+  RiAddLine,
+  RiCheckLine,
+  RiCloseLine,
+  RiArrowLeftSLine,
+  RiArrowRightSLine,
+  RiSearchLine,
+  RiLogoutBoxRLine,
+  RiDashboardFill,
+  RiNotification3Fill,
+  RiTimeFill,
+  RiLinkM,
+  RiDownload2Fill,
+  RiErrorWarningFill,
+  RiEditFill,
+  RiFileList3Fill,
+  RiHistoryLine,
+} from "react-icons/ri";
 
-// Set de iconuri Phosphor (pline). Păstrăm API-ul <Icon name=... /> ca să nu schimbăm
-// toate locurile de apel.
+// Set de iconuri Remix Icon. Păstrăm API-ul <Icon name=... /> ca să nu schimbăm
+// locurile de apel. Pentru a comuta la alt set (Material/Tabler/Lucide etc.)
+// se schimbă doar maparea de mai jos.
 export type IconName =
   | "home"
   | "calendar"
@@ -55,49 +55,44 @@ export type IconName =
   | "report"
   | "history";
 
-const MAP: Record<IconName, PhosphorIcon> = {
-  home: House,
-  calendar: CalendarBlank,
-  users: Users,
-  settings: GearSix,
-  car: Car,
-  phone: Phone,
-  message: ChatCircleText,
-  plus: Plus,
-  check: Check,
-  x: X,
-  back: CaretLeft,
-  next: CaretRight,
-  search: MagnifyingGlass,
-  logout: SignOut,
-  dashboard: SquaresFour,
-  bell: Bell,
-  clock: Clock,
-  link: LinkSimple,
-  download: DownloadSimple,
-  alert: Warning,
-  edit: PencilSimple,
-  report: FileText,
-  history: ClockCounterClockwise,
+const MAP: Record<IconName, IconType> = {
+  home: RiHome5Fill,
+  calendar: RiCalendarFill,
+  users: RiGroupFill,
+  settings: RiSettings3Fill,
+  car: RiCarFill,
+  phone: RiPhoneFill,
+  message: RiChat3Fill,
+  plus: RiAddLine,
+  check: RiCheckLine,
+  x: RiCloseLine,
+  back: RiArrowLeftSLine,
+  next: RiArrowRightSLine,
+  search: RiSearchLine,
+  logout: RiLogoutBoxRLine,
+  dashboard: RiDashboardFill,
+  bell: RiNotification3Fill,
+  clock: RiTimeFill,
+  link: RiLinkM,
+  download: RiDownload2Fill,
+  alert: RiErrorWarningFill,
+  edit: RiEditFill,
+  report: RiFileList3Fill,
+  history: RiHistoryLine,
 };
-
-// Aceste iconuri arată mai bine cu contur gros (nu pline): bifă, X, plus, săgeți, lupă.
-const BOLD = new Set<IconName>(["check", "x", "plus", "back", "next", "search"]);
 
 export function Icon({
   name,
   size = 20,
-  weight,
   className,
 }: {
   name: IconName;
   size?: number;
-  weight?: IconWeight;
-  /** păstrat pentru compatibilitate cu apelurile vechi (ignorat) */
+  /** păstrate pentru compatibilitate cu apelurile vechi (ignorate) */
+  weight?: string;
   strokeWidth?: number;
   className?: string;
 }) {
   const Cmp = MAP[name];
-  const w: IconWeight = weight ?? (BOLD.has(name) ? "bold" : "fill");
-  return <Cmp size={size} weight={w} className={className} aria-hidden />;
+  return <Cmp size={size} className={className} aria-hidden />;
 }
