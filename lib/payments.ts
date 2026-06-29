@@ -1,6 +1,8 @@
 // Logica de plată — pură (folosibilă pe server și pe client).
 // Plata se ține în ORE: elevul achită la casă `paid_hours`. O lecție = `duration_hours`
-// (implicit 1.5). Lecțiile consumă ore în ordine cronologică. O lecție e:
+// (implicit 1.5). Lecțiile consumă ore în ordine cronologică. O lecție e ACOPERITĂ
+// dacă la începutul ei mai exista sold plătit (deci „1 oră achitată" acoperă prima lecție
+// de 1.5h). O lecție e:
 //   - paid_instructor : instructorul a încasat cash (override) -> verde
 //   - paid_cashier    : acoperită de orele achitate la casă     -> verde
 //   - unpaid          : peste orele achitate, neîncasată         -> roșu
@@ -41,13 +43,10 @@ export function computePaymentStates(
       result.set(l.id, "paid_cashier");
       continue;
     }
-    const after = consumed + Number(l.duration_hours || 0);
-    if (after <= paidHours + 1e-6) {
-      result.set(l.id, "paid_cashier");
-    } else {
-      result.set(l.id, "unpaid");
-    }
-    consumed = after;
+    // Acoperită dacă mai era sold plătit la ÎNCEPUTUL lecției (regulă „lenientă").
+    const covered = consumed < paidHours - 1e-6;
+    result.set(l.id, covered ? "paid_cashier" : "unpaid");
+    consumed += Number(l.duration_hours || 0);
   }
   return result;
 }

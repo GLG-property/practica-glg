@@ -25,7 +25,8 @@ import {
 export interface ScheduleAssignment {
   id: string;
   phase: 1 | 2;
-  completed: number;
+  booked: number; // lecții programate (scheduled + completed)
+  completed: number; // lecții efectuate
   requiredLessons: number;
   instructorId: string;
   instructorName: string;
@@ -33,6 +34,9 @@ export interface ScheduleAssignment {
   workStart: string; // "HH:MM"
   workEnd: string;
 }
+
+const PHASE1_REQUIRED = 12;
+const PHASE2_MIN_COMPLETED = 8;
 
 const LESSON_HOURS = 1.5; // toate lecțiile sunt de 1.5h
 const SLOT_MIN = 90;
@@ -82,6 +86,13 @@ export function ScheduleClient({
     return FIXED_SLOTS.filter((s) => toMin(s) >= ws && toMin(s) + SLOT_MIN <= we);
   }, [current]);
   const capacity = slots.length;
+
+  // Reguli de fază: faza 2 se deblochează după 12 programate + 8 efectuate în faza 1.
+  const phase2Ready =
+    !!phase1 && phase1.booked >= PHASE1_REQUIRED && phase1.completed >= PHASE2_MIN_COMPLETED;
+  const phaseLocked = current?.phase === 2 && !phase2Ready;
+  const phaseFull = !!current && current.booked >= current.requiredLessons;
+  const canSchedule = !!current && !phaseLocked && !phaseFull;
 
   const [date, setDate] = useState(defaultDate);
   const [monthBase, setMonthBase] = useState(() => new Date(defaultDate + "T12:00:00"));
@@ -161,7 +172,15 @@ export function ScheduleClient({
       setMonthLoads(rec);
       router.refresh();
     } else if (res.reason === "phase2_locked") {
-      setMsg({ ok: false, text: fmt(d.lesson.phase2Locked, { n: res.remaining ?? 0 }) });
+      setMsg({
+        ok: false,
+        text: fmt(d.lesson.phase2Locked, {
+          booked: res.bookedPhase1 ?? 0,
+          done: res.completedPhase1 ?? 0,
+        }),
+      });
+    } else if (res.reason === "phase_full") {
+      setMsg({ ok: false, text: fmt(d.lesson.phaseFull, { required: current.requiredLessons }) });
     } else if (res.reason === "conflict_instructor") {
       setMsg({ ok: false, text: d.lesson.conflictInstructor });
     } else if (res.reason === "conflict_car") {
@@ -193,9 +212,10 @@ export function ScheduleClient({
         ].join(" ")}
       >
         {p === 1 ? d.students.phase1 : d.students.phase2}
+        {p === 2 && !phase2Ready ? " 🔒" : ""}
         {a && (
           <span className={`block text-xs font-medium ${active ? "text-white/80" : "text-slate-400"}`}>
-            {a.completed}/{a.requiredLessons}
+            {a.booked}/{a.requiredLessons}
           </span>
         )}
       </button>
@@ -232,8 +252,27 @@ export function ScheduleClient({
         )}
       </div>
 
+      {/* Faza 2 blocată */}
+      {current && phaseLocked && (
+        <div className="card border-amber-200 bg-amber-50/60">
+          <p className="flex items-center gap-2 text-sm font-bold text-amber-800">🔒 {d.students.phase2}</p>
+          <p className="mt-1 text-sm text-amber-700">
+            {fmt(d.lesson.phase2Locked, { booked: phase1?.booked ?? 0, done: phase1?.completed ?? 0 })}
+          </p>
+        </div>
+      )}
+
+      {/* Faza completă */}
+      {current && !phaseLocked && phaseFull && (
+        <div className="card border-emerald-200 bg-emerald-50/60">
+          <p className="flex items-center gap-2 text-sm font-bold text-emerald-800">
+            <Icon name="check" size={16} /> {fmt(d.lesson.phaseFull, { required: current.requiredLessons })}
+          </p>
+        </div>
+      )}
+
       {/* Calendar lună: zile libere/ocupate */}
-      {current && (
+      {canSchedule && (
         <div className="card">
           <div className="mb-2 flex items-center justify-between">
             <span className="label mb-0">{d.lesson.date}</span>
@@ -305,7 +344,7 @@ export function ScheduleClient({
       )}
 
       {/* Orar: sloturi fixe de 1.5h pentru ziua aleasă */}
-      {current && (
+      {canSchedule && (
         <div className="card">
           <div className="mb-3 flex items-start justify-between gap-2">
             <div className="min-w-0">

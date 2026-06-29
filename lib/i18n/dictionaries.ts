@@ -61,7 +61,8 @@ export const dictionaries = {
       created: "Programare salvată!",
       conflictInstructor: "Instructorul are deja o lecție în acest interval.",
       conflictCar: "Mașina e deja folosită în acest interval.",
-      phase2Locked: "Faza 2 e blocată: mai sunt {n} lecții de efectuat în faza 1.",
+      phase2Locked: "Faza 2 se deblochează când faza 1 are 12 lecții programate și 8 efectuate (acum: {booked}/12 progr., {done}/8 efect.).",
+      phaseFull: "Faza e completă — {required} lecții deja programate.",
       adminOverride: "Forțează (admin)", remarks: "Remarci", addScreenshot: "Adaugă captură",
     },
     groups: {
@@ -163,7 +164,8 @@ export const dictionaries = {
       created: "Запись сохранена!",
       conflictInstructor: "У инструктора уже есть урок в это время.",
       conflictCar: "Машина уже используется в это время.",
-      phase2Locked: "Фаза 2 заблокирована: осталось {n} уроков в фазе 1.",
+      phase2Locked: "Фаза 2 откроется, когда в фазе 1 будет 12 записанных и 8 выполненных уроков (сейчас: {booked}/12 зап., {done}/8 вып.).",
+      phaseFull: "Фаза заполнена — {required} уроков уже запланировано.",
       adminOverride: "Принудительно (админ)", remarks: "Заметки", addScreenshot: "Добавить скриншот",
     },
     groups: {

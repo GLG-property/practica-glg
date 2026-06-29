@@ -27,6 +27,16 @@ export function StudentProfileView({
     paidCashier: d.payment.paidCashier, paidInstructor: d.payment.paidInstructor,
   };
 
+  // Ore achitate cash direct la instructor (lecții marcate de instructor ca plătite).
+  const cashByInstructor = new Map<string, number>();
+  for (const l of lessons) {
+    if (l.payment_state === "paid_instructor") {
+      const n = l.instructor?.full_name ?? "—";
+      cashByInstructor.set(n, (cashByInstructor.get(n) ?? 0) + Number(l.duration_hours || 1.5));
+    }
+  }
+  const cashList = [...cashByInstructor.entries()];
+
   return (
     <div className="space-y-3">
       {/* Antet */}
@@ -66,6 +76,25 @@ export function StudentProfileView({
             <p className="text-xs text-slate-500 mt-0.5">{fmt(d.students.noShowCount, { n: noShowCount })}</p>
           </div>
         </div>
+
+        {/* Achitat cash direct la instructor */}
+        {cashList.length > 0 && (
+          <div className="mt-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
+            <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+              <Icon name="check" size={14} /> {d.payment.paidInstructor}
+            </p>
+            <ul className="space-y-0.5">
+              {cashList.map(([instr, hours]) => (
+                <li key={instr} className="flex items-center justify-between text-sm text-emerald-900">
+                  <span className="min-w-0 truncate">{instr}</span>
+                  <span className="shrink-0 font-semibold tabular-nums">
+                    {hours} {d.lesson.hours}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="mt-3">
           <LinkBotButton studentId={student.id} existingCode={student.link_code} linked={linked} />

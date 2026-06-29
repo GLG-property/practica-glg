@@ -6,11 +6,17 @@ import { scheduleReminderForLesson } from "@/lib/notifications/schedule";
 import { addHoursISO } from "@/lib/utils/date";
 import type { LessonStatus, StudentInstructor } from "@/lib/db/types";
 
-const PHASE1_REQUIRED = 12;
+const PHASE1_REQUIRED = 12; // lecții programate în faza 1 pentru a debloca faza 2
+const PHASE2_MIN_COMPLETED = 8; // lecții efectuate în faza 1 pentru a debloca faza 2
 
 export type CreateLessonResult =
   | { ok: true; lessonId: string }
-  | { ok: false; reason: "conflict_instructor" | "conflict_car" | "phase2_locked" | "error"; remaining?: number };
+  | {
+      ok: false;
+      reason: "conflict_instructor" | "conflict_car" | "phase2_locked" | "phase_full" | "error";
+      bookedPhase1?: number;
+      completedPhase1?: number;
+    };
 
 /** Numărul de lecții efectuate într-o fază pentru un elev. */
 export async function completedLessonsCount(studentId: string, phase: 1 | 2): Promise<number> {
@@ -47,19 +53,30 @@ export async function createLesson(params: {
   if (!a) return { ok: false, reason: "error" };
   const assignment = a as StudentInstructor;
 
-  // Gate faza 2: blocată până la N lecții efectuate în faza 1 (N = required_lessons
-  // al atribuirii de faza 1, implicit 12). Adminul poate forța.
+  // O singură interogare pentru toate lecțiile elevului → calculăm programate + efectuate/fază.
+  const { data: ls } = await supabase
+    .from("lessons")
+    .select("phase, status")
+    .eq("student_id", assignment.student_id);
+  const booked: Record<number, number> = { 1: 0, 2: 0 };
+  const completed: Record<number, number> = { 1: 0, 2: 0 };
+  for (const l of (ls as { phase: number; status: string }[]) ?? []) {
+    if (l.status === "scheduled" || l.status === "completed") booked[l.phase] = (booked[l.phase] ?? 0) + 1;
+    if (l.status === "completed") completed[l.phase] = (completed[l.phase] ?? 0) + 1;
+  }
+
+  // CAP: nu se pot programa mai mult de `required_lessons` lecții (programate) pe o fază.
+  const required = assignment.required_lessons || PHASE1_REQUIRED;
+  if (!params.override && (booked[assignment.phase] ?? 0) >= required) {
+    return { ok: false, reason: "phase_full" };
+  }
+
+  // GATE faza 2: se deblochează când faza 1 are 12 lecții PROGRAMATE și minim 8 EFECTUATE.
   if (assignment.phase === 2 && !params.override) {
-    const { data: phase1 } = await supabase
-      .from("student_instructors")
-      .select("required_lessons")
-      .eq("student_id", assignment.student_id)
-      .eq("phase", 1)
-      .maybeSingle();
-    const required = (phase1 as { required_lessons: number } | null)?.required_lessons ?? PHASE1_REQUIRED;
-    const done = await completedLessonsCount(assignment.student_id, 1);
-    if (done < required) {
-      return { ok: false, reason: "phase2_locked", remaining: required - done };
+    const bookedP1 = booked[1] ?? 0;
+    const completedP1 = completed[1] ?? 0;
+    if (bookedP1 < PHASE1_REQUIRED || completedP1 < PHASE2_MIN_COMPLETED) {
+      return { ok: false, reason: "phase2_locked", bookedPhase1: bookedP1, completedPhase1: completedP1 };
     }
   }
 

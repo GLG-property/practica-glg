@@ -48,7 +48,8 @@ export default async function OperatorSchedulePage({
   const assignments: ScheduleAssignment[] = profile.assignments.map((a) => ({
     id: a.id,
     phase: a.phase,
-    completed: a.booked, // contorul arată câte sunt PROGRAMATE din total
+    booked: a.booked, // lecții programate (scheduled + completed)
+    completed: a.completed, // lecții efectuate
     requiredLessons: a.required_lessons,
     instructorId: a.instructor_id,
     instructorName: a.instructor?.full_name ?? "—",
