@@ -52,24 +52,24 @@ export function PinKeypad({
   return (
     <div className="w-full flex flex-col items-center">
       {/* Indicatori PIN (puncte) */}
-      <div className="flex gap-3 my-5" aria-hidden>
+      <div className="flex gap-2.5 my-3" aria-hidden>
         {Array.from({ length }).map((_, i) => (
           <span
             key={i}
-            className={`w-4 h-4 rounded-full border-2 ${
-              i < pin.length ? "bg-brand border-brand" : "border-gray-300"
+            className={`w-3 h-3 rounded-full border-2 ${
+              i < pin.length ? "bg-brand border-brand" : "border-slate-300"
             }`}
           />
         ))}
       </div>
 
       {error && (
-        <p className="text-status-noshow font-semibold text-center mb-3" role="alert">
+        <p className="text-status-noshow text-sm font-semibold text-center mb-2" role="alert">
           {error}
         </p>
       )}
 
-      <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
+      <div className="grid grid-cols-3 gap-2 w-full max-w-[260px]">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((n) => (
           <KeyButton key={n} onClick={() => press(n)} disabled={busy}>
             {n}
@@ -89,7 +89,7 @@ export function PinKeypad({
       <button
         onClick={submit}
         disabled={pin.length !== length || busy}
-        className="btn-primary w-full max-w-xs mt-5 disabled:opacity-40"
+        className="btn-primary w-full max-w-[260px] mt-3 disabled:opacity-40"
       >
         {busy ? "…" : labels.enter}
       </button>
@@ -112,10 +112,10 @@ function KeyButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`h-20 rounded-2xl text-3xl font-bold transition active:scale-95 ${
+      className={`h-14 rounded-xl font-bold transition active:scale-95 ${
         variant === "ghost"
-          ? "bg-gray-100 text-gray-700"
-          : "bg-white border-2 border-gray-200 text-gray-900 hover:border-brand"
+          ? "bg-slate-100 text-slate-600 text-sm"
+          : "bg-white border border-slate-200 text-slate-900 text-xl hover:border-brand"
       } disabled:opacity-40`}
     >
       {children}

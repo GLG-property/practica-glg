@@ -27,7 +27,7 @@ export const dictionaries = {
       enter: "Intră", clear: "Șterge",
     },
     status: {
-      scheduled: "Programat", completed: "Efectuat", no_show: "Nu s-a prezentat", cancelled: "Anulat",
+      scheduled: "Programat", completed: "Efectuat", no_show: "Absent", cancelled: "Anulat",
     },
     payment: {
       paid: "Achitat", unpaid: "Neachitat", paidCashier: "Achitat la casă",
@@ -129,7 +129,7 @@ export const dictionaries = {
       enter: "Войти", clear: "Стереть",
     },
     status: {
-      scheduled: "Запланировано", completed: "Выполнено", no_show: "Не явился", cancelled: "Отменено",
+      scheduled: "Запланировано", completed: "Выполнено", no_show: "Неявка", cancelled: "Отменено",
     },
     payment: {
       paid: "Оплачено", unpaid: "Не оплачено", paidCashier: "Оплачено в кассе",

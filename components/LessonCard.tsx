@@ -38,6 +38,8 @@ export function LessonCard({
   const phone = lesson.student?.phone;
   const name = lesson.student ? studentName(lesson.student) : "—";
   const href = studentHref && lesson.student ? studentHref : undefined;
+  // Lecția a început? (comparăm instant-uri UTC — corect indiferent de fus orar)
+  const started = new Date(lesson.start_time).getTime() <= Date.now();
 
   function mark(status: LessonStatus) {
     startTransition(async () => {
@@ -68,11 +70,11 @@ export function LessonCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             {href ? (
-              <Link href={href} className="text-base font-semibold text-slate-900 hover:text-brand truncate">{name}</Link>
+              <Link href={href} className="min-w-0 truncate text-base font-semibold text-slate-900 hover:text-brand">{name}</Link>
             ) : (
-              <span className="text-base font-semibold text-slate-900 truncate">{name}</span>
+              <span className="min-w-0 truncate text-base font-semibold text-slate-900">{name}</span>
             )}
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex shrink-0 flex-col items-end gap-1">
               <StatusBadge status={lesson.status} label={d.status[lesson.status]} />
               <PaymentBadge state={lesson.payment_state} labels={payLabels} />
             </div>
@@ -109,11 +111,16 @@ export function LessonCard({
           )}
 
           {showActions && lesson.status === "scheduled" && (
-            <div className="flex gap-2">
-              <button disabled={pending} onClick={() => mark("completed")} className="btn-success flex-1 text-xs"><Icon name="check" size={15} /> {d.today.markCompleted}</button>
-              <button disabled={pending} onClick={() => mark("no_show")} className="btn-danger flex-1 text-xs"><Icon name="x" size={15} /> {d.today.markNoShow}</button>
-              <button disabled={pending} onClick={() => mark("cancelled")} className="btn-secondary text-xs">{d.today.markCancelled}</button>
-            </div>
+            started ? (
+              <div className="flex gap-2">
+                <button disabled={pending} onClick={() => mark("completed")} className="btn-success flex-1 text-xs"><Icon name="check" size={15} /> {d.today.markCompleted}</button>
+                <button disabled={pending} onClick={() => mark("no_show")} className="btn-danger flex-1 text-xs"><Icon name="x" size={15} /> {d.today.markNoShow}</button>
+                <button disabled={pending} onClick={() => mark("cancelled")} className="btn-secondary text-xs">{d.today.markCancelled}</button>
+              </div>
+            ) : (
+              // Lecție viitoare: nu poți marca „efectuat/absent" încă — doar anulare.
+              <button disabled={pending} onClick={() => mark("cancelled")} className="btn-secondary w-full text-xs">{d.today.markCancelled}</button>
+            )
           )}
         </div>
       )}

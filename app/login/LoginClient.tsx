@@ -52,8 +52,8 @@ export function LoginClient() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center px-4 py-10">
-      <div className="w-full max-w-sm flex items-center justify-between mb-8">
+    <main className="min-h-screen flex flex-col items-center px-4 py-5">
+      <div className="w-full max-w-sm flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="GLG Property" className="h-10 w-10 object-contain" />
@@ -125,7 +125,7 @@ export function LoginClient() {
         </div>
       )}
 
-      <div className="mt-10 w-full max-w-sm border-t border-slate-200 pt-6">
+      <div className="mt-auto w-full max-w-sm border-t border-slate-200 pt-4">
         <ContactOperator />
       </div>
     </main>

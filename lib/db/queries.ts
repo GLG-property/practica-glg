@@ -286,23 +286,33 @@ export interface DashboardStats {
 
 export async function getAdminDashboard(todayRange: { start: string; end: string }): Promise<DashboardStats> {
   const supabase = getAdminClient();
-  const [{ count: studentsTotal }, { count: groupsTotal }] = await Promise.all([
+  // Toate interogările în PARALEL + lecțiile zilei „ușoare" (fără calcul de plată) = mult mai rapid.
+  const [studentsRes, groupsRes, todayRes, cashRes] = await Promise.all([
     supabase.from("students").select("id", { count: "exact", head: true }),
     supabase.from("groups").select("id", { count: "exact", head: true }),
+    supabase
+      .from("lessons")
+      .select("status, instructor:users!lessons_instructor_id_fkey(full_name)")
+      .gte("start_time", todayRange.start)
+      .lte("start_time", todayRange.end),
+    supabase.from("lessons").select("id", { count: "exact", head: true }).eq("payment_by_instructor", true),
   ]);
 
-  const todayLessons = await getLessonsRange({ start: todayRange.start, end: todayRange.end });
+  const studentsTotal = studentsRes.count;
+  const groupsTotal = groupsRes.count;
+  const cashCount = cashRes.count;
+  const todayLessons = ((todayRes.data as any[]) ?? []) as {
+    status: string;
+    instructor: { full_name: string } | { full_name: string }[] | null;
+  }[];
+
   const decided = todayLessons.filter((l) => l.status === "completed" || l.status === "no_show");
   const noShows = decided.filter((l) => l.status === "no_show").length;
 
-  const { count: cashCount } = await supabase
-    .from("lessons")
-    .select("id", { count: "exact", head: true })
-    .eq("payment_by_instructor", true);
-
   const perInstructorMap = new Map<string, number>();
   for (const l of todayLessons) {
-    const n = l.instructor?.full_name ?? "—";
+    const instr = Array.isArray(l.instructor) ? l.instructor[0] : l.instructor;
+    const n = instr?.full_name ?? "—";
     perInstructorMap.set(n, (perInstructorMap.get(n) ?? 0) + 1);
   }
 

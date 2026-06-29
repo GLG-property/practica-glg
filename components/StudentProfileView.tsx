@@ -142,10 +142,10 @@ export function StudentProfileView({
           <ul className="divide-y divide-slate-100">
             {lessons.map((l) => (
               <li key={l.id} className="flex items-center justify-between gap-2 py-2.5">
-                <span className="text-sm text-slate-600">
+                <span className="min-w-0 truncate text-sm text-slate-600">
                   {dateTime(l.start_time)} · {d.lesson.phase} {l.phase}
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex shrink-0 items-center gap-1.5">
                   <PaymentBadge state={l.payment_state} labels={payLabels} />
                   <StatusBadge status={l.status} label={d.status[l.status]} />
                 </div>

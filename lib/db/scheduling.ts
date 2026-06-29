@@ -124,6 +124,10 @@ export async function setLessonStatus(params: {
   const supabase = getAdminClient();
   let q = supabase.from("lessons").update({ status: params.status }).eq("id", params.lessonId);
   if (params.restrictInstructorId) q = q.eq("instructor_id", params.restrictInstructorId);
+  // „Efectuat" / „Absent" doar pentru lecții care au început deja (nu din viitor).
+  if (params.status === "completed" || params.status === "no_show") {
+    q = q.lte("start_time", new Date().toISOString());
+  }
   const { data, error } = await q.select("id");
   if (error) {
     console.error("[setLessonStatus]", error);
