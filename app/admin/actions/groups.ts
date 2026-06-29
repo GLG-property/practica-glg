@@ -11,12 +11,18 @@ import { audit } from "@/lib/db/audit";
 const emptyToNull = (v: unknown) => (v === "" || v == null ? null : v);
 const nullableText = (max: number) =>
   z.preprocess(emptyToNull, z.string().trim().max(max).nullable());
+const dateField = z.preprocess(
+  emptyToNull,
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Dată invalidă").nullable()
+);
 
 // ---------------- CREATE GROUP ----------------
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(120),
   theory_teacher: nullableText(120),
+  start_date: dateField,
+  end_date: dateField,
 });
 
 /** Creează o grupă nouă (status „draft"). Doar admin. */
@@ -26,8 +32,13 @@ export async function createGroupAction(formData: FormData) {
   const parsed = createSchema.safeParse({
     name: formData.get("name"),
     theory_teacher: formData.get("theory_teacher"),
+    start_date: formData.get("start_date"),
+    end_date: formData.get("end_date"),
   });
   if (!parsed.success) return { ok: false as const, error: "invalid" };
+  if (parsed.data.start_date && parsed.data.end_date && parsed.data.end_date < parsed.data.start_date) {
+    return { ok: false as const, error: "invalid_dates" };
+  }
 
   const supabase = getAdminClient();
   const { data, error } = await supabase
@@ -35,6 +46,8 @@ export async function createGroupAction(formData: FormData) {
     .insert({
       name: parsed.data.name,
       theory_teacher: parsed.data.theory_teacher,
+      start_date: parsed.data.start_date,
+      end_date: parsed.data.end_date,
       status: "draft",
       created_by: admin.id,
     })
@@ -51,6 +64,18 @@ export async function createGroupAction(formData: FormData) {
   });
   revalidatePath("/admin/groups");
   return { ok: true as const, groupId: (data as { id: string })?.id };
+}
+
+/** Arhivează / dezarhivează manual o grupă. Doar admin. */
+export async function setGroupArchivedAction(groupId: string, archived: boolean) {
+  const admin = await requireAdmin();
+  if (!z.string().uuid().safeParse(groupId).success) return { ok: false as const };
+  const supabase = getAdminClient();
+  const { error } = await supabase.from("groups").update({ archived }).eq("id", groupId);
+  if (error) return { ok: false as const };
+  await audit({ userId: admin.id, action: archived ? "group.archive" : "group.unarchive", entity: "group", entityId: groupId });
+  revalidatePath("/admin/groups");
+  return { ok: true as const };
 }
 
 // ---------------- ASSIGN INSTRUCTOR ----------------

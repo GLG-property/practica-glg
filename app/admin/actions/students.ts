@@ -14,6 +14,10 @@ const groupField = z.preprocess(
   emptyToNull,
   z.string().uuid("Grupă invalidă").nullable()
 );
+const dateField = z.preprocess(
+  emptyToNull,
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Dată invalidă").nullable()
+);
 
 const studentSchema = z.object({
   first_name: z.string().trim().min(1, "Prenumele e obligatoriu").max(60),
@@ -21,6 +25,7 @@ const studentSchema = z.object({
   phone: nullableText(40),
   transmission: z.enum(["manual", "automatic"]),
   group_id: groupField,
+  birth_date: dateField,
   theory_teacher: nullableText(120),
   notes: nullableText(1000),
 });
@@ -35,6 +40,7 @@ export async function createStudentAction(formData: FormData) {
     phone: formData.get("phone"),
     transmission: formData.get("transmission"),
     group_id: formData.get("group_id"),
+    birth_date: formData.get("birth_date"),
     theory_teacher: formData.get("theory_teacher"),
     notes: formData.get("notes"),
   });
@@ -52,6 +58,7 @@ export async function createStudentAction(formData: FormData) {
       phone: parsed.data.phone,
       transmission: parsed.data.transmission,
       group_id: parsed.data.group_id,
+      birth_date: parsed.data.birth_date,
       theory_teacher: null,
       notes: parsed.data.notes,
       created_by: user.id,

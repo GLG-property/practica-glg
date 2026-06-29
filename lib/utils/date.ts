@@ -43,6 +43,39 @@ export function isoToYmd(iso: string): string {
   return formatInTimeZone(parseISO(iso), BUSINESS_TZ, "yyyy-MM-dd");
 }
 
+/** Ziua de azi ca YYYY-MM-DD, în fusul afacerii. */
+export function todayYmd(): string {
+  return formatInTimeZone(new Date(), BUSINESS_TZ, "yyyy-MM-dd");
+}
+
+/** Câte zile (întregi) au rămas până la o dată (YYYY-MM-DD). Negativ = a trecut. Null dacă lipsește. */
+export function daysUntil(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  const today = Date.parse(todayYmd() + "T00:00:00Z");
+  const target = Date.parse(dateStr.slice(0, 10) + "T00:00:00Z");
+  if (Number.isNaN(target)) return null;
+  return Math.round((target - today) / 86400000);
+}
+
+/** Vârsta (ani împliniți) dintr-o dată de naștere (YYYY-MM-DD). Null dacă lipsește. */
+export function ageFromBirth(birth: string | null | undefined): number | null {
+  if (!birth) return null;
+  const b = new Date(birth.slice(0, 10) + "T00:00:00Z");
+  const now = new Date(todayYmd() + "T00:00:00Z");
+  if (Number.isNaN(b.getTime())) return null;
+  let age = now.getUTCFullYear() - b.getUTCFullYear();
+  const m = now.getUTCMonth() - b.getUTCMonth();
+  if (m < 0 || (m === 0 && now.getUTCDate() < b.getUTCDate())) age--;
+  return age;
+}
+
+/** O grupă e arhivată dacă e marcată manual SAU dacă data de final a trecut. */
+export function isGroupArchived(g: { archived?: boolean | null; end_date?: string | null }): boolean {
+  if (g.archived) return true;
+  if (g.end_date) return g.end_date.slice(0, 10) < todayYmd();
+  return false;
+}
+
 /** Interval [start, end] al unei zile calendaristice (în fusul afacerii), ca ISO UTC. */
 export function dayRange(date: Date): { start: string; end: string } {
   const ymd = ymdInTz(date);

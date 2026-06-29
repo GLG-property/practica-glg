@@ -64,11 +64,19 @@ export function NewStudentClient({
           </div>
         </div>
 
-        <div>
-          <label className="label" htmlFor="phone">
-            {d.students.phone}
-          </label>
-          <input id="phone" name="phone" type="tel" maxLength={40} className="input" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label" htmlFor="phone">
+              {d.students.phone}
+            </label>
+            <input id="phone" name="phone" type="tel" maxLength={40} className="input" />
+          </div>
+          <div>
+            <label className="label" htmlFor="birth_date">
+              Data nașterii
+            </label>
+            <input id="birth_date" name="birth_date" type="date" className="input" />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

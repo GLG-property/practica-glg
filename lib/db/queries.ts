@@ -1,6 +1,7 @@
 import "server-only";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { computePaymentStates } from "@/lib/payments";
+import { daysUntil, ageFromBirth, isGroupArchived } from "@/lib/utils/date";
 import type {
   Car, Group, LessonWithRelations, PaymentState, Student, StudentInstructor,
   StudentRemark, User,
@@ -190,7 +191,13 @@ export async function getAllCars(): Promise<Car[]> {
 
 // ---------------- GROUPS & STUDENTS ----------------
 
-export async function getAllGroups(): Promise<(Group & { studentCount: number })[]> {
+export type GroupRow = Group & {
+  studentCount: number;
+  daysLeft: number | null; // zile rămase până la end_date
+  isArchived: boolean; // arhivată manual sau end_date trecut
+};
+
+export async function getAllGroups(): Promise<GroupRow[]> {
   const supabase = getAdminClient();
   const { data: groups } = await supabase.from("groups").select("*").order("created_at", { ascending: false });
   const { data: students } = await supabase.from("students").select("group_id");
@@ -198,7 +205,41 @@ export async function getAllGroups(): Promise<(Group & { studentCount: number })
   for (const s of (students as any[]) ?? []) {
     if (s.group_id) counts.set(s.group_id, (counts.get(s.group_id) ?? 0) + 1);
   }
-  return ((groups as Group[]) ?? []).map((g) => ({ ...g, studentCount: counts.get(g.id) ?? 0 }));
+  return ((groups as Group[]) ?? []).map((g) => ({
+    ...g,
+    studentCount: counts.get(g.id) ?? 0,
+    daysLeft: daysUntil(g.end_date),
+    isArchived: isGroupArchived(g),
+  }));
+}
+
+export interface AdminStudentRow extends Student {
+  group_name: string | null;
+  group_end_date: string | null;
+  isArchived: boolean; // grupa lui e arhivată
+  daysLeft: number | null; // zile rămase din perioada grupei
+  age: number | null;
+}
+
+/** Lista de cursanți pentru admin: cu grupă, vârstă, zile rămase și status de arhivă. */
+export async function getAdminStudents(): Promise<AdminStudentRow[]> {
+  const supabase = getAdminClient();
+  const { data } = await supabase
+    .from("students")
+    .select("*, group:groups(name, end_date, archived)")
+    .order("last_name");
+  return ((data as any[]) ?? []).map((row) => {
+    const { group, ...s } = row;
+    const g = Array.isArray(group) ? group[0] : group;
+    return {
+      ...(s as Student),
+      group_name: g?.name ?? null,
+      group_end_date: g?.end_date ?? null,
+      isArchived: g ? isGroupArchived(g) : false,
+      daysLeft: daysUntil(g?.end_date ?? null),
+      age: ageFromBirth((s as Student).birth_date),
+    };
+  });
 }
 
 export async function getGroupById(id: string): Promise<Group | null> {

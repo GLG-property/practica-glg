@@ -53,6 +53,9 @@ export interface Group {
   name: string;
   theory_teacher: string | null;
   status: GroupStatus;
+  start_date: string | null;
+  end_date: string | null;
+  archived: boolean;
   created_by: string | null;
   sent_at: string | null;
   created_at: string;
@@ -66,6 +69,7 @@ export interface Student {
   transmission: Transmission;
   group_id: string | null;
   theory_teacher: string | null;
+  birth_date: string | null;
   notes: string | null;
   paid_hours: number;
   photo_url: string | null;
