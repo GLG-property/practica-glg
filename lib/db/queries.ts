@@ -199,8 +199,12 @@ export type GroupRow = Group & {
 
 export async function getAllGroups(): Promise<GroupRow[]> {
   const supabase = getAdminClient();
-  const { data: groups } = await supabase.from("groups").select("*").order("created_at", { ascending: false });
-  const { data: students } = await supabase.from("students").select("group_id");
+  const [groupsRes, studentsRes] = await Promise.all([
+    supabase.from("groups").select("*").order("created_at", { ascending: false }),
+    supabase.from("students").select("group_id"),
+  ]);
+  const groups = groupsRes.data;
+  const students = studentsRes.data;
   const counts = new Map<string, number>();
   for (const s of (students as any[]) ?? []) {
     if (s.group_id) counts.set(s.group_id, (counts.get(s.group_id) ?? 0) + 1);

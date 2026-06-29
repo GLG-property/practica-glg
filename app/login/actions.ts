@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { after } from "next/server";
 import { headers } from "next/headers";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { verifyCode, isValidCodeFormat } from "@/lib/auth/code";
@@ -64,28 +65,21 @@ async function doLogin(role: UserRole, code: string): Promise<LoginResult> {
   const supabase = getAdminClient();
   const ip = await clientIp();
 
-  // 1) Stare throttling pentru (ip, rol).
-  const { data: attemptRow } = await supabase
-    .from("login_attempts")
-    .select("fail_count, locked_until")
-    .eq("ip", ip)
-    .eq("role", role)
-    .maybeSingle();
+  // 1+2) Throttling + utilizatorii rolului — în PARALEL (interogări independente).
+  const [attemptsRes, usersRes] = await Promise.all([
+    supabase.from("login_attempts").select("fail_count, locked_until").eq("ip", ip).eq("role", role).maybeSingle(),
+    supabase.from("users").select("*").eq("role", role).eq("active", true),
+  ]);
+  const attemptRow = attemptsRes.data;
+  const { data, error } = usersRes;
 
   const now = Date.now();
   const lockedUntil = attemptRow?.locked_until ? new Date(attemptRow.locked_until).getTime() : 0;
   if (lockedUntil > now) {
     return { ok: false, reason: "locked", minutes: Math.ceil((lockedUntil - now) / 60000) };
   }
-  // Dacă blocarea a expirat, repornim contorul.
   const baseCount = lockedUntil && lockedUntil <= now ? 0 : attemptRow?.fail_count ?? 0;
 
-  // 2) Căutăm utilizatorul activ al rolului al cărui cod se potrivește.
-  const { data, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("role", role)
-    .eq("active", true);
   if (error) return { ok: false, reason: "invalid" };
 
   let matched: User | null = null;
@@ -116,9 +110,12 @@ async function doLogin(role: UserRole, code: string): Promise<LoginResult> {
     return { ok: false, reason: "wrong", attemptsLeft: MAX_ATTEMPTS - count };
   }
 
-  // 3) Succes: curățăm throttling-ul și contoarele contului.
-  await supabase.from("login_attempts").delete().eq("ip", ip).eq("role", role);
-  await supabase.from("users").update({ failed_attempts: 0, locked_until: null }).eq("id", matched.id);
+  // 3) Succes: housekeeping DUPĂ răspuns (nu blochează login-ul).
+  const matchedId = matched.id;
+  after(async () => {
+    await supabase.from("login_attempts").delete().eq("ip", ip).eq("role", role);
+    await supabase.from("users").update({ failed_attempts: 0, locked_until: null }).eq("id", matchedId);
+  });
 
   await createSession({
     id: matched.id,
