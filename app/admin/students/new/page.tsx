@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewStudentPage() {
   await requireAdmin();
-  const groups = await getAllGroups();
+  // Doar grupele active — nu adăugăm cursanți în grupe arhivate.
+  const groups = (await getAllGroups()).filter((g) => !g.isArchived);
   return <NewStudentClient groups={groups} />;
 }
