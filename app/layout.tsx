@@ -1,6 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+
+// Font Manrope cu suport complet RO (diacritice) + RU (chirilice).
+const manrope = Manrope({
+  subsets: ["latin", "latin-ext", "cyrillic"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "GLG Property — Școala auto",
@@ -34,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ro">
+    <html lang="ro" className={manrope.variable}>
       <body>
         {children}
         <ServiceWorkerRegister />
