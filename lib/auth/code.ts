@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { User, UserRole } from "@/lib/db/types";
 
-const BCRYPT_ROUNDS = 10;
+// Cost 8: echilibru viteză/securitate pentru coduri scurte (avem și throttle la login).
+const BCRYPT_ROUNDS = 8;
 
 /** Lungimea codului de login în funcție de rol. */
 export function codeLength(role: UserRole): number {
