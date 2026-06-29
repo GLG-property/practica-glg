@@ -2,34 +2,33 @@
 
 import type { IconType } from "react-icons";
 import {
-  RiHome5Fill,
-  RiCalendarFill,
-  RiGroupFill,
-  RiSettings3Fill,
-  RiCarFill,
-  RiPhoneFill,
-  RiChat3Fill,
-  RiAddLine,
-  RiCheckLine,
-  RiCloseLine,
-  RiArrowLeftSLine,
-  RiArrowRightSLine,
-  RiSearchLine,
-  RiLogoutBoxRLine,
-  RiDashboardFill,
-  RiNotification3Fill,
-  RiTimeFill,
-  RiLinkM,
-  RiDownload2Fill,
-  RiErrorWarningFill,
-  RiEditFill,
-  RiFileList3Fill,
-  RiHistoryLine,
-} from "react-icons/ri";
+  TbHome,
+  TbCalendarEvent,
+  TbUsers,
+  TbSettings,
+  TbCar,
+  TbPhone,
+  TbMessageCircle,
+  TbPlus,
+  TbCheck,
+  TbX,
+  TbChevronLeft,
+  TbChevronRight,
+  TbSearch,
+  TbLogout,
+  TbLayoutDashboard,
+  TbBell,
+  TbClock,
+  TbLink,
+  TbDownload,
+  TbAlertTriangle,
+  TbPencil,
+  TbFileText,
+  TbHistory,
+} from "react-icons/tb";
 
-// Set de iconuri Remix Icon. Păstrăm API-ul <Icon name=... /> ca să nu schimbăm
-// locurile de apel. Pentru a comuta la alt set (Material/Tabler/Lucide etc.)
-// se schimbă doar maparea de mai jos.
+// Set de iconuri Tabler. Păstrăm API-ul <Icon name=... />. Pentru a comuta la alt set
+// (Material/Lucide/Remix/Hero) se schimbă doar maparea de mai jos.
 export type IconName =
   | "home"
   | "calendar"
@@ -56,29 +55,29 @@ export type IconName =
   | "history";
 
 const MAP: Record<IconName, IconType> = {
-  home: RiHome5Fill,
-  calendar: RiCalendarFill,
-  users: RiGroupFill,
-  settings: RiSettings3Fill,
-  car: RiCarFill,
-  phone: RiPhoneFill,
-  message: RiChat3Fill,
-  plus: RiAddLine,
-  check: RiCheckLine,
-  x: RiCloseLine,
-  back: RiArrowLeftSLine,
-  next: RiArrowRightSLine,
-  search: RiSearchLine,
-  logout: RiLogoutBoxRLine,
-  dashboard: RiDashboardFill,
-  bell: RiNotification3Fill,
-  clock: RiTimeFill,
-  link: RiLinkM,
-  download: RiDownload2Fill,
-  alert: RiErrorWarningFill,
-  edit: RiEditFill,
-  report: RiFileList3Fill,
-  history: RiHistoryLine,
+  home: TbHome,
+  calendar: TbCalendarEvent,
+  users: TbUsers,
+  settings: TbSettings,
+  car: TbCar,
+  phone: TbPhone,
+  message: TbMessageCircle,
+  plus: TbPlus,
+  check: TbCheck,
+  x: TbX,
+  back: TbChevronLeft,
+  next: TbChevronRight,
+  search: TbSearch,
+  logout: TbLogout,
+  dashboard: TbLayoutDashboard,
+  bell: TbBell,
+  clock: TbClock,
+  link: TbLink,
+  download: TbDownload,
+  alert: TbAlertTriangle,
+  edit: TbPencil,
+  report: TbFileText,
+  history: TbHistory,
 };
 
 export function Icon({
@@ -88,7 +87,7 @@ export function Icon({
 }: {
   name: IconName;
   size?: number;
-  /** păstrate pentru compatibilitate cu apelurile vechi (ignorate) */
+  /** păstrate pentru compatibilitate (ignorate) */
   weight?: string;
   strokeWidth?: number;
   className?: string;
