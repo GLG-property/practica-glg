@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { dictionaries, fmt } from "@/lib/i18n/dictionaries";
 import { Icon, type IconName } from "@/components/icons";
 import { PinKeypad } from "@/components/PinKeypad";
+import { ContactOperator } from "@/components/ContactOperator";
 import { homePathForRole } from "@/lib/auth/routes";
 import type { LangPref, UserRole } from "@/lib/db/types";
 import { loginAction } from "./actions";
@@ -123,6 +124,10 @@ export function LoginClient() {
           />
         </div>
       )}
+
+      <div className="mt-10 w-full max-w-sm border-t border-slate-200 pt-6">
+        <ContactOperator />
+      </div>
     </main>
   );
 }

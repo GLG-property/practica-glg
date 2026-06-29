@@ -4,6 +4,7 @@ import { getCarById, getUserNotifications } from "@/lib/db/queries";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { logoutAction } from "@/lib/auth/actions";
 import { Icon } from "@/components/icons";
+import { ContactOperator } from "@/components/ContactOperator";
 import { dateDMY, dateTime } from "@/lib/utils/date";
 import { expiryLevel, expiryClasses } from "@/lib/utils/expiry";
 
@@ -109,6 +110,11 @@ export default async function InstructorProfilePage() {
             ))}
           </ul>
         )}
+      </div>
+
+      {/* Contact operator */}
+      <div className="card">
+        <ContactOperator />
       </div>
 
       {/* Ieșire */}
