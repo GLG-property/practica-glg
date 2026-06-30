@@ -78,7 +78,12 @@ export default async function OperatorSchedulePage({
         <h1 className="page-title">{fmt(d.operators.scheduleFor, { name })}</h1>
       </div>
 
-      <ScheduleClient assignments={assignments} studentLabel={name} defaultDate={defaultDate} />
+      <ScheduleClient
+        assignments={assignments}
+        studentLabel={name}
+        defaultDate={defaultDate}
+        phase2Unlocked={profile.student.phase2_unlocked}
+      />
     </div>
   );
 }

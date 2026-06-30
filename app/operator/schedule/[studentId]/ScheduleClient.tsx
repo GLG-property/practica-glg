@@ -64,10 +64,12 @@ const toMin = (hhmm: string) => {
 export function ScheduleClient({
   assignments,
   defaultDate,
+  phase2Unlocked = false,
 }: {
   assignments: ScheduleAssignment[];
   studentLabel: string;
   defaultDate: string;
+  phase2Unlocked?: boolean;
 }) {
   const { d, fmt, lang } = useI18n();
   const router = useRouter();
@@ -87,9 +89,11 @@ export function ScheduleClient({
   }, [current]);
   const capacity = slots.length;
 
-  // Reguli de fază: faza 2 se deblochează după 12 programate + 8 efectuate în faza 1.
+  // Reguli de fază: faza 2 se deblochează după 12 programate + 8 efectuate în faza 1,
+  // SAU dacă adminul a deblocat manual faza 2 (ex. cursant care face doar Scala).
   const phase2Ready =
-    !!phase1 && phase1.booked >= PHASE1_REQUIRED && phase1.completed >= PHASE2_MIN_COMPLETED;
+    phase2Unlocked ||
+    (!!phase1 && phase1.booked >= PHASE1_REQUIRED && phase1.completed >= PHASE2_MIN_COMPLETED);
   const phaseLocked = current?.phase === 2 && !phase2Ready;
   const phaseFull = !!current && current.booked >= current.requiredLessons;
   const canSchedule = !!current && !phaseLocked && !phaseFull;

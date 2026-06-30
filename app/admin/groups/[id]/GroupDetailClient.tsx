@@ -40,10 +40,6 @@ export interface InstructorOption {
 
 type Method = "balanced" | "manual";
 
-function instructorLabel(i: InstructorOption): string {
-  return i.model ? i.full_name + " · " + i.model : i.full_name;
-}
-
 function currentInstructor(s: StudentRow, phase: 1 | 2): string {
   return s.assignments.find((a) => a.phase === phase)?.instructor_id ?? "";
 }
@@ -75,6 +71,23 @@ export function GroupDetailClient({
   const [sentOk, setSentOk] = useState(false);
 
   const txLabel = (t: Transmission) => (t === "manual" ? d.students.manual : d.students.automatic);
+
+  // Eticheta instructorului: nume — mașină (cutie, etapă). Așa adminul știe pe cine alege.
+  const instLabel = (i: InstructorOption) => {
+    const tx = i.transmission === "manual" ? d.students.manual : d.students.automatic;
+    const stg = i.stage === "beginner" ? d.cars.beginner : d.cars.advanced;
+    const car = [i.model, i.plate].filter(Boolean).join(" ");
+    return i.full_name + " — " + (car ? car + " · " : "") + tx + " · " + stg;
+  };
+
+  // Lista COMPLETĂ de instructori, cu cei „recomandați" (etapă + cutie potrivite) primii.
+  const sortForPhase = (stageWant: CarStage, txWant: Transmission) =>
+    [...instructors].sort((a, b) => {
+      const sa = (a.stage === stageWant ? 0 : 2) + (a.transmission === txWant ? 0 : 1);
+      const sb = (b.stage === stageWant ? 0 : 2) + (b.transmission === txWant ? 0 : 1);
+      if (sa !== sb) return sa - sb;
+      return a.full_name.localeCompare(b.full_name);
+    });
 
   const ready = useMemo(
     () =>
@@ -175,12 +188,8 @@ export function GroupDetailClient({
         ) : (
           <ul className="space-y-3">
             {students.map((s) => {
-              const phase1 = instructors.filter(
-                (i) => i.stage === "beginner" && i.transmission === s.transmission
-              );
-              const phase2 = instructors.filter(
-                (i) => i.stage === "advanced" && i.transmission === s.transmission
-              );
+              const phase1 = sortForPhase("beginner", s.transmission);
+              const phase2 = sortForPhase("advanced", s.transmission);
               const opVal = operatorByStudent[s.id] ?? "";
 
               return (
@@ -197,6 +206,7 @@ export function GroupDetailClient({
                       label={d.students.phase1}
                       value={currentInstructor(s, 1)}
                       options={phase1}
+                      labeler={instLabel}
                       disabled={locked || pendingKey === s.id + ":1"}
                       onChange={(v) => onAssign(s.id, 1, v)}
                     />
@@ -204,6 +214,7 @@ export function GroupDetailClient({
                       label={d.students.phase2}
                       value={currentInstructor(s, 2)}
                       options={phase2}
+                      labeler={instLabel}
                       disabled={locked || pendingKey === s.id + ":2"}
                       onChange={(v) => onAssign(s.id, 2, v)}
                     />
@@ -304,18 +315,19 @@ function PhaseSelect({
   label,
   value,
   options,
+  labeler,
   disabled,
   onChange,
 }: {
   label: string;
   value: string;
   options: InstructorOption[];
+  labeler: (i: InstructorOption) => string;
   disabled: boolean;
   onChange: (value: string) => void;
 }) {
   const { d } = useI18n();
-  // Dacă instructorul curent nu mai e în lista filtrată (ex. mașină schimbată),
-  // îl adăugăm ca opțiune ascunsă ca să rămână vizibil.
+  // Dacă instructorul curent nu e în listă (rar), îl păstrăm vizibil.
   const hasCurrent = !value || options.some((o) => o.id === value);
 
   return (
@@ -331,7 +343,7 @@ function PhaseSelect({
         {!hasCurrent && <option value={value}>—</option>}
         {options.map((o) => (
           <option key={o.id} value={o.id}>
-            {instructorLabel(o)}
+            {labeler(o)}
           </option>
         ))}
       </select>

@@ -70,6 +70,7 @@ export interface Student {
   group_id: string | null;
   theory_teacher: string | null;
   birth_date: string | null;
+  phase2_unlocked: boolean;
   notes: string | null;
   paid_hours: number;
   photo_url: string | null;

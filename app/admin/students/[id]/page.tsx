@@ -6,6 +6,7 @@ import { getStudentProfile } from "@/lib/db/queries";
 import { StudentProfileView } from "@/components/StudentProfileView";
 import { Icon } from "@/components/icons";
 import { PaidHoursClient } from "./PaidHoursClient";
+import { Phase2UnlockClient } from "./Phase2UnlockClient";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function AdminStudentPage({
         <Icon name="back" size={20} /> {d.nav.students}
       </Link>
       <PaidHoursClient studentId={id} current={profile.student.paid_hours} />
+      <Phase2UnlockClient studentId={id} unlocked={profile.student.phase2_unlocked} />
       <StudentProfileView profile={profile} lang={s.language_pref} canAddRemark />
     </div>
   );

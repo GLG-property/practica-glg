@@ -47,11 +47,14 @@ export async function createLesson(params: {
 
   const { data: a } = await supabase
     .from("student_instructors")
-    .select("*")
+    .select("*, student:students(phase2_unlocked)")
     .eq("id", params.assignmentId)
     .single();
   if (!a) return { ok: false, reason: "error" };
-  const assignment = a as StudentInstructor;
+  const stuJoin = (a as { student?: { phase2_unlocked?: boolean } | { phase2_unlocked?: boolean }[] }).student;
+  const stuRow = Array.isArray(stuJoin) ? stuJoin[0] : stuJoin;
+  const phase2Unlocked = stuRow?.phase2_unlocked === true;
+  const assignment = a as unknown as StudentInstructor;
 
   // O singură interogare pentru toate lecțiile elevului → calculăm programate + efectuate/fază.
   const { data: ls } = await supabase
@@ -72,7 +75,8 @@ export async function createLesson(params: {
   }
 
   // GATE faza 2: se deblochează când faza 1 are 12 lecții PROGRAMATE și minim 8 EFECTUATE.
-  if (assignment.phase === 2 && !params.override) {
+  // Excepție: adminul a deblocat manual faza 2 pentru acest cursant (ex. face doar Scala).
+  if (assignment.phase === 2 && !params.override && !phase2Unlocked) {
     const bookedP1 = booked[1] ?? 0;
     const completedP1 = completed[1] ?? 0;
     if (bookedP1 < PHASE1_REQUIRED || completedP1 < PHASE2_MIN_COMPLETED) {

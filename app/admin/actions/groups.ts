@@ -129,14 +129,9 @@ export async function assignInstructorAction(input: AssignInstructorInput) {
   if (!instr || !(instr as { active: boolean }).active) return { ok: false as const, error: "error" };
 
   const car = (instr as unknown as { car: { stage: string; transmission: string; category: string } | null }).car;
-  const neededStage = parsed.data.phase === 1 ? "beginner" : "advanced";
-  // Eligibilitate (impusă pe server, nu doar în UI): categoria B + etapa + cutia trebuie să corespundă.
-  if (
-    !car ||
-    car.category !== "B" ||
-    car.stage !== neededStage ||
-    car.transmission !== (student as { transmission: string }).transmission
-  ) {
+  // Adminul vede lista completă și poate atribui orice instructor (cat. B) pe orice fază
+  // — flexibil pentru schimbări/concedii. Mașina rezultă din instructor.
+  if (!car || car.category !== "B") {
     return { ok: false as const, error: "ineligible" };
   }
 

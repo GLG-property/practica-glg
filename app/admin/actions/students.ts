@@ -156,3 +156,25 @@ export async function setPaidHoursAction(studentId: string, hours: number) {
   revalidatePath("/admin/students/" + parsed.data.studentId);
   return { ok: true as const };
 }
+
+/** Deblochează / reblochează manual faza 2 pentru un cursant (ex. face doar Scala). Doar admin. */
+export async function setPhase2UnlockedAction(studentId: string, unlocked: boolean) {
+  const user = await requireAdmin();
+  if (!z.string().uuid().safeParse(studentId).success) return { ok: false as const, error: "invalid" };
+
+  const supabase = getAdminClient();
+  const { error } = await supabase
+    .from("students")
+    .update({ phase2_unlocked: unlocked })
+    .eq("id", studentId);
+  if (error) return { ok: false as const, error: "error" };
+
+  await audit({
+    userId: user.id,
+    action: unlocked ? "student.phase2_unlock" : "student.phase2_lock",
+    entity: "student",
+    entityId: studentId,
+  });
+  revalidatePath("/admin/students/" + studentId);
+  return { ok: true as const };
+}

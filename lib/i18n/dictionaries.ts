@@ -53,6 +53,9 @@ export const dictionaries = {
       noShowCount: "A lipsit de {n} ori", progress: "Progres lecții",
       phase1: "Faza 1", phase2: "Faza 2", linkBot: "Conectează notificările",
       linkCode: "Cod de legare: {code}", instructors: "Instructori atribuiți",
+      phase2Manual: "Faza 2 (Scala)", phase2OnHint: "Deblocată manual — se poate programa fără faza 1",
+      phase2OffHint: "Se deblochează automat la 12 programate + 8 efectuate în faza 1",
+      phase2Unlock: "Deblochează faza 2", phase2Relock: "Revino la regulă",
     },
     lesson: {
       addTitle: "Programare nouă", student: "Cursant", instructor: "Instructor",
@@ -165,6 +168,9 @@ export const dictionaries = {
       noShowCount: "Пропустил(а) {n} раз", progress: "Прогресс уроков",
       phase1: "Фаза 1", phase2: "Фаза 2", linkBot: "Подключить уведомления",
       linkCode: "Код привязки: {code}", instructors: "Назначенные инструкторы",
+      phase2Manual: "Фаза 2 (Scala)", phase2OnHint: "Разблокирована вручную — можно записывать без фазы 1",
+      phase2OffHint: "Разблокируется автоматически при 12 записях + 8 выполненных в фазе 1",
+      phase2Unlock: "Разблокировать фазу 2", phase2Relock: "Вернуть по правилу",
     },
     lesson: {
       addTitle: "Новая запись", student: "Ученик", instructor: "Инструктор",
