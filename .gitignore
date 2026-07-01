@@ -38,3 +38,7 @@ supabase/INSTRUCTORI_CODURI.txt
 
 # fișiere temporare workflow
 .wf-*.mjs
+
+# conturi personal (PIN-uri) — NU în repo
+staff_seed.sql
+CODURI_PERSONAL.txt
