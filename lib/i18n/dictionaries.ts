@@ -79,6 +79,7 @@ export const dictionaries = {
       phase2Manual: "Faza 2 (Scala)", phase2OnHint: "Deblocată manual — se poate programa fără faza 1",
       phase2OffHint: "Se deblochează automat la 12 programate + 8 efectuate în faza 1",
       phase2Unlock: "Deblochează faza 2", phase2Relock: "Revino la regulă",
+      perInstructor: "Lecții per instructor", current: "actual", lessonsShort: "lecții",
     },
     lesson: {
       addTitle: "Programare nouă", student: "Cursant", instructor: "Instructor",
@@ -87,8 +88,9 @@ export const dictionaries = {
       created: "Programare salvată!",
       conflictInstructor: "Instructorul are deja o lecție în acest interval.",
       conflictCar: "Mașina e deja folosită în acest interval.",
-      phase2Locked: "Faza 2 se deblochează când faza 1 are 12 lecții programate și 8 efectuate (acum: {booked}/12 progr., {done}/8 efect.).",
+      phase2Locked: "Faza 2 se deblochează când faza 1 are 12 lecții programate (acum: {booked}/12).",
       phaseFull: "Faza e completă — {required} lecții deja programate.",
+      dailyLimit: "Cursantul are deja 2 lecții în această zi.",
       adminOverride: "Forțează (admin)", remarks: "Remarci", addScreenshot: "Adaugă captură",
     },
     groups: {
@@ -218,6 +220,7 @@ export const dictionaries = {
       phase2Manual: "Фаза 2 (Scala)", phase2OnHint: "Разблокирована вручную — можно записывать без фазы 1",
       phase2OffHint: "Разблокируется автоматически при 12 записях + 8 выполненных в фазе 1",
       phase2Unlock: "Разблокировать фазу 2", phase2Relock: "Вернуть по правилу",
+      perInstructor: "Уроки по инструкторам", current: "текущий", lessonsShort: "уроков",
     },
     lesson: {
       addTitle: "Новая запись", student: "Ученик", instructor: "Инструктор",
@@ -226,8 +229,9 @@ export const dictionaries = {
       created: "Запись сохранена!",
       conflictInstructor: "У инструктора уже есть урок в это время.",
       conflictCar: "Машина уже используется в это время.",
-      phase2Locked: "Фаза 2 откроется, когда в фазе 1 будет 12 записанных и 8 выполненных уроков (сейчас: {booked}/12 зап., {done}/8 вып.).",
+      phase2Locked: "Фаза 2 откроется, когда в фазе 1 будет 12 записанных уроков (сейчас: {booked}/12).",
       phaseFull: "Фаза заполнена — {required} уроков уже запланировано.",
+      dailyLimit: "У ученика уже 2 урока в этот день.",
       adminOverride: "Принудительно (админ)", remarks: "Заметки", addScreenshot: "Добавить скриншот",
     },
     groups: {

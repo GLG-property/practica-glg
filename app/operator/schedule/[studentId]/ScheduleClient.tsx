@@ -36,7 +36,6 @@ export interface ScheduleAssignment {
 }
 
 const PHASE1_REQUIRED = 12;
-const PHASE2_MIN_COMPLETED = 8;
 
 const LESSON_HOURS = 1.5; // toate lecțiile sunt de 1.5h
 const SLOT_MIN = 90;
@@ -91,9 +90,7 @@ export function ScheduleClient({
 
   // Reguli de fază: faza 2 se deblochează după 12 programate + 8 efectuate în faza 1,
   // SAU dacă adminul a deblocat manual faza 2 (ex. cursant care face doar Scala).
-  const phase2Ready =
-    phase2Unlocked ||
-    (!!phase1 && phase1.booked >= PHASE1_REQUIRED && phase1.completed >= PHASE2_MIN_COMPLETED);
+  const phase2Ready = phase2Unlocked || (!!phase1 && phase1.booked >= PHASE1_REQUIRED);
   const phaseLocked = current?.phase === 2 && !phase2Ready;
   const phaseFull = !!current && current.booked >= current.requiredLessons;
   const canSchedule = !!current && !phaseLocked && !phaseFull;
@@ -185,6 +182,8 @@ export function ScheduleClient({
       });
     } else if (res.reason === "phase_full") {
       setMsg({ ok: false, text: fmt(d.lesson.phaseFull, { required: current.requiredLessons }) });
+    } else if (res.reason === "daily_limit") {
+      setMsg({ ok: false, text: d.lesson.dailyLimit });
     } else if (res.reason === "conflict_instructor") {
       setMsg({ ok: false, text: d.lesson.conflictInstructor });
     } else if (res.reason === "conflict_car") {

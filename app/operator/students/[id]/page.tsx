@@ -75,7 +75,7 @@ export default async function OperatorStudentPage({
 
       <ReassignClient studentId={id} assignments={phaseAssigns} instructors={instructors} />
 
-      <StudentProfileView profile={profile} lang={s.language_pref} canAddRemark={false} />
+      <StudentProfileView profile={profile} lang={s.language_pref} canAddRemark />
     </div>
   );
 }

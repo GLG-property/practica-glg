@@ -135,6 +135,42 @@ export function StudentProfileView({
         )}
       </div>
 
+      {/* Lecții per instructor (istoric: dacă elevul a fost mutat, apar mai mulți) */}
+      {(() => {
+        const byInstr = new Map<string, { name: string; total: number; done: number }>();
+        for (const l of lessons) {
+          if (l.status === "cancelled") continue;
+          const id = l.instructor_id ?? l.instructor?.id ?? "?";
+          const e = byInstr.get(id) ?? { name: l.instructor?.full_name ?? "—", total: 0, done: 0 };
+          e.total++;
+          if (l.status === "completed") e.done++;
+          byInstr.set(id, e);
+        }
+        if (byInstr.size === 0) return null;
+        const currentIds = new Set(assignments.map((a) => a.instructor_id));
+        const rows = [...byInstr.entries()].sort((a, b) => b[1].total - a[1].total);
+        return (
+          <div className="card">
+            <h3 className="section-title mb-2.5">{d.students.perInstructor}</h3>
+            <ul className="space-y-1.5">
+              {rows.map(([id, e]) => (
+                <li key={id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="truncate font-medium text-slate-900">{e.name}</span>
+                    {currentIds.has(id) && (
+                      <span className="cell-badge bg-emerald-50 text-emerald-700">{d.students.current}</span>
+                    )}
+                  </span>
+                  <span className="shrink-0 tabular-nums text-slate-600">
+                    {e.done}/{e.total} {d.students.lessonsShort}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
+
       {/* Remarci */}
       {canAddRemark && (
         <div className="card">

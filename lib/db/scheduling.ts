@@ -3,7 +3,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { findConflict } from "@/lib/db/conflicts";
 import { audit } from "@/lib/db/audit";
 import { scheduleReminderForLesson } from "@/lib/notifications/schedule";
-import { addHoursISO } from "@/lib/utils/date";
+import { addHoursISO, isoToYmd } from "@/lib/utils/date";
 import type { LessonStatus, StudentInstructor } from "@/lib/db/types";
 
 const PHASE1_REQUIRED = 12; // lecții programate în faza 1 pentru a debloca faza 2
@@ -13,10 +13,18 @@ export type CreateLessonResult =
   | { ok: true; lessonId: string }
   | {
       ok: false;
-      reason: "conflict_instructor" | "conflict_car" | "phase2_locked" | "phase_full" | "error";
+      reason:
+        | "conflict_instructor"
+        | "conflict_car"
+        | "phase2_locked"
+        | "phase_full"
+        | "daily_limit"
+        | "error";
       bookedPhase1?: number;
       completedPhase1?: number;
     };
+
+const MAX_LESSONS_PER_DAY = 2; // un cursant nu poate avea mai mult de 2 lecții pe zi
 
 /** Numărul de lecții efectuate într-o fază pentru un elev. */
 export async function completedLessonsCount(studentId: string, phase: 1 | 2): Promise<number> {
@@ -56,16 +64,25 @@ export async function createLesson(params: {
   const phase2Unlocked = stuRow?.phase2_unlocked === true;
   const assignment = a as unknown as StudentInstructor;
 
-  // O singură interogare pentru toate lecțiile elevului → calculăm programate + efectuate/fază.
+  // O singură interogare pentru toate lecțiile elevului → programate/efectuate/fază + lecții/zi.
   const { data: ls } = await supabase
     .from("lessons")
-    .select("phase, status")
+    .select("phase, status, start_time")
     .eq("student_id", assignment.student_id);
   const booked: Record<number, number> = { 1: 0, 2: 0 };
   const completed: Record<number, number> = { 1: 0, 2: 0 };
-  for (const l of (ls as { phase: number; status: string }[]) ?? []) {
+  const targetYmd = isoToYmd(params.start);
+  let sameDay = 0;
+  for (const l of (ls as { phase: number; status: string; start_time: string }[]) ?? []) {
     if (l.status === "scheduled" || l.status === "completed") booked[l.phase] = (booked[l.phase] ?? 0) + 1;
     if (l.status === "completed") completed[l.phase] = (completed[l.phase] ?? 0) + 1;
+    // Limita zilnică ține cont de lecțiile care „ocupă" ziua (nu cele anulate).
+    if (l.status !== "cancelled" && isoToYmd(l.start_time) === targetYmd) sameDay++;
+  }
+
+  // LIMITĂ: max 2 lecții pe zi pentru un cursant (chiar și cu forțare de admin).
+  if (sameDay >= MAX_LESSONS_PER_DAY) {
+    return { ok: false, reason: "daily_limit" };
   }
 
   // CAP: nu se pot programa mai mult de `required_lessons` lecții (programate) pe o fază.
@@ -74,12 +91,12 @@ export async function createLesson(params: {
     return { ok: false, reason: "phase_full" };
   }
 
-  // GATE faza 2: se deblochează când faza 1 are 12 lecții PROGRAMATE și minim 8 EFECTUATE.
+  // GATE faza 2: se deblochează AUTOMAT când faza 1 are 12 lecții PROGRAMATE (12/12).
   // Excepție: adminul a deblocat manual faza 2 pentru acest cursant (ex. face doar Scala).
   if (assignment.phase === 2 && !params.override && !phase2Unlocked) {
     const bookedP1 = booked[1] ?? 0;
     const completedP1 = completed[1] ?? 0;
-    if (bookedP1 < PHASE1_REQUIRED || completedP1 < PHASE2_MIN_COMPLETED) {
+    if (bookedP1 < PHASE1_REQUIRED) {
       return { ok: false, reason: "phase2_locked", bookedPhase1: bookedP1, completedPhase1: completedP1 };
     }
   }
