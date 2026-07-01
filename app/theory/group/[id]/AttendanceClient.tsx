@@ -17,7 +17,7 @@ export function AttendanceClient({
   date: string;
   students: AttStudent[];
 }) {
-  const { d, fmt } = useI18n();
+  const { d } = useI18n();
   const router = useRouter();
 
   // Schimbarea datei reîncarcă pagina cu ?date=
@@ -38,13 +38,24 @@ export function AttendanceClient({
       <h2 className="section-title">{d.theory.attendance}</h2>
 
       {students.length === 0 ? (
-        <p className="card text-sm text-slate-500">{d.common.noData}</p>
+        <p className="xwrap px-3 py-6 text-center text-sm text-slate-400">{d.common.noData}</p>
       ) : (
-        <ul className="space-y-2">
-          {students.map((s) => (
-            <StudentToggle key={s.id} s={s} groupId={groupId} date={date} d={d} fmt={fmt} />
-          ))}
-        </ul>
+        <div className="xwrap">
+          <table className="xtable">
+            <thead>
+              <tr>
+                <th>{d.students.lastName}</th>
+                <th className="td-num">Absențe total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((s) => (
+                <StudentToggle key={s.id} s={s} groupId={groupId} date={date} d={d} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -55,13 +66,11 @@ function StudentToggle({
   groupId,
   date,
   d,
-  fmt,
 }: {
   s: AttStudent;
   groupId: string;
   date: string;
   d: any;
-  fmt: any;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -78,23 +87,26 @@ function StudentToggle({
   }
 
   return (
-    <li className="card flex items-center gap-3">
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold text-slate-900 truncate">{s.name}</p>
-        <p className="text-xs text-slate-400">{fmt(d.theory.absencesTotal, { n: s.absencesTotal })}</p>
-      </div>
-      <button
-        type="button"
-        onClick={toggle}
-        disabled={pending}
-        className={
-          "flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition " +
-          (absent ? "bg-rose-600 text-white" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100")
-        }
-      >
-        <Icon name={absent ? "absent" : "check"} size={18} />
-        {absent ? d.theory.absent : d.theory.present}
-      </button>
-    </li>
+    <tr>
+      <td className="font-semibold text-slate-900">{s.name}</td>
+      <td className="td-num">{s.absencesTotal}</td>
+      <td>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle();
+          }}
+          disabled={pending}
+          className={
+            "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm font-semibold transition " +
+            (absent ? "bg-rose-600 text-white" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100")
+          }
+        >
+          <Icon name={absent ? "absent" : "check"} size={16} />
+          {absent ? d.theory.absent : d.theory.present}
+        </button>
+      </td>
+    </tr>
   );
 }

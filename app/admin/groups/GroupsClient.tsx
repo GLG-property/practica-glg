@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
 import { Icon } from "@/components/icons";
@@ -69,21 +68,32 @@ export function GroupsClient({ groups, teachers }: { groups: GroupRow[]; teacher
       </div>
 
       {list.length === 0 ? (
-        <p className="card text-sm text-slate-500">{d.common.noData}</p>
+        <p className="xwrap px-3 py-6 text-center text-sm text-slate-400">{d.common.noData}</p>
       ) : (
-        <ul className="space-y-3">
-          {list.map((g) => (
-            <li key={g.id}>
-              <GroupCard group={g} />
-            </li>
-          ))}
-        </ul>
+        <div className="xwrap">
+          <table className="xtable">
+            <thead>
+              <tr>
+                <th>{d.groups.name}</th>
+                <th className="td-num">{d.nav.students}</th>
+                <th>{d.filters.period}</th>
+                <th>{d.filters.daysLeft.replace("{n}", "").trim() || "—"}</th>
+                <th>{d.filters.archive}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((g) => (
+                <GroupRow key={g.id} group={g} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
 }
 
-function GroupCard({ group: g }: { group: GroupRow }) {
+function GroupRow({ group: g }: { group: GroupRow }) {
   const { d, fmt } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -112,41 +122,34 @@ function GroupCard({ group: g }: { group: GroupRow }) {
   }
 
   return (
-    <div className="card">
-      <div className="flex items-start justify-between gap-3">
-        <Link href={"/admin/groups/" + g.id} className="min-w-0 flex-1">
-          <div className="truncate font-semibold text-slate-900">{g.name}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-slate-500">
-            <span className="inline-flex items-center gap-1">
-              <Icon name="users" size={14} /> {fmt(d.groups.studentsCount, { n: g.studentCount })}
-            </span>
-            {(g.start_date || g.end_date) && (
-              <span className="inline-flex items-center gap-1">
-                <Icon name="calendar" size={14} />
-                {g.start_date ? dateDMY(g.start_date + "T00:00:00Z") : "…"} –{" "}
-                {g.end_date ? dateDMY(g.end_date + "T00:00:00Z") : "…"}
-              </span>
-            )}
-          </div>
-        </Link>
-        <span className={`shrink-0 rounded-lg px-2 py-1 text-xs font-semibold ${daysCls}`}>{daysText}</span>
-      </div>
-
-      <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
+    <tr className="row-link" onClick={() => router.push("/admin/groups/" + g.id)}>
+      <td className="font-semibold text-slate-900">{g.name}</td>
+      <td className="td-num">{g.studentCount}</td>
+      <td>
+        {g.start_date || g.end_date
+          ? `${g.start_date ? dateDMY(g.start_date + "T00:00:00Z") : "…"} – ${
+              g.end_date ? dateDMY(g.end_date + "T00:00:00Z") : "…"
+            }`
+          : "—"}
+      </td>
+      <td>
+        <span className={"cell-badge " + daysCls}>{daysText}</span>
+      </td>
+      <td>
         <button
           type="button"
-          onClick={toggleArchive}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleArchive();
+          }}
           disabled={pending}
           className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-brand"
         >
           <Icon name={g.archived ? "history" : "download"} size={15} />
           {g.archived ? d.filters.unarchive : d.filters.archiveNow}
         </button>
-        <Link href={"/admin/groups/" + g.id} className="inline-flex items-center gap-1 text-sm font-semibold text-brand">
-          {d.common.open} <Icon name="next" size={16} />
-        </Link>
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 }
 

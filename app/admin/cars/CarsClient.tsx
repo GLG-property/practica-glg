@@ -70,42 +70,65 @@ export function CarsClient({
       )}
 
       {cars.length === 0 && !adding ? (
-        <p className="card text-slate-500">{d.common.noData}</p>
+        <p className="xwrap px-3 py-6 text-center text-sm text-slate-400">{d.common.noData}</p>
       ) : (
-        <div className="space-y-3">
-          {cars.map((car) =>
-            editingId === car.id ? (
-              <div key={car.id} className="card">
-                <h2 className="section-title mb-3">
-                  {car.model} · {car.plate}
-                </h2>
-                <CarForm
-                  car={car}
-                  instructors={instructors}
-                  currentDriverId={driverByCar.get(car.id)?.id ?? ""}
-                  onDone={() => setEditingId(null)}
-                  onCancel={() => setEditingId(null)}
-                />
-              </div>
-            ) : (
-              <CarCard
-                key={car.id}
-                car={car}
-                driver={driverByCar.get(car.id) ?? null}
-                onEdit={() => {
-                  setAdding(false);
-                  setEditingId(car.id);
-                }}
-              />
-            )
-          )}
+        <div className="xwrap">
+          <table className="xtable">
+            <thead>
+              <tr>
+                <th>{c.plate}</th>
+                <th>{c.model}</th>
+                <th>{c.transmission}</th>
+                <th>{c.stage}</th>
+                <th>Categorie</th>
+                <th>Șofer</th>
+                <th>{c.itp}</th>
+                <th>{c.insurance}</th>
+                <th>{c.service}</th>
+                <th>{d.groups.status}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {cars.map((car) =>
+                editingId === car.id ? (
+                  <tr key={car.id}>
+                    <td colSpan={11} className="p-0">
+                      <div className="card">
+                        <h2 className="section-title mb-3">
+                          {car.model} · {car.plate}
+                        </h2>
+                        <CarForm
+                          car={car}
+                          instructors={instructors}
+                          currentDriverId={driverByCar.get(car.id)?.id ?? ""}
+                          onDone={() => setEditingId(null)}
+                          onCancel={() => setEditingId(null)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <CarRow
+                    key={car.id}
+                    car={car}
+                    driver={driverByCar.get(car.id) ?? null}
+                    onEdit={() => {
+                      setAdding(false);
+                      setEditingId(car.id);
+                    }}
+                  />
+                )
+              )}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
   );
 }
 
-function CarCard({
+function CarRow({
   car,
   driver,
   onEdit,
@@ -121,71 +144,52 @@ function CarCard({
     car.transmission === "manual" ? d.students.manual : d.students.automatic;
   const stageLabel = car.stage === "beginner" ? c.beginner : c.advanced;
 
-  const badges: { label: string; value: string | null }[] = [
-    { label: c.itp, value: car.itp_expiry },
-    { label: c.insurance, value: car.insurance_expiry },
-    { label: c.service, value: car.service_due },
-  ];
+  const expiries: (string | null)[] = [car.itp_expiry, car.insurance_expiry, car.service_due];
 
   return (
-    <div className="card">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-brand">
-              <Icon name="car" size={20} />
-            </span>
-            <h3 className="truncate text-lg font-semibold text-slate-900">{car.model}</h3>
-            {!car.active && (
-              <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-                {/* eticheta lipsă în dicționar — literal RO */}
-                Inactivă
-              </span>
-            )}
-          </div>
-          <p className="mt-0.5 text-sm font-medium text-slate-600">{car.plate}</p>
-          {/* Șoferul (instructorul) atribuit acestei mașini */}
-          <p className="mt-1 inline-flex items-center gap-1.5 text-sm">
-            <Icon name="users" size={14} className="text-slate-400" />
-            {driver ? (
-              <span className="font-medium text-slate-700">{driver.full_name}</span>
-            ) : (
-              <span className="text-slate-400">Fără șofer atribuit</span>
-            )}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-            <span className={`rounded-full px-2.5 py-1 font-bold ${car.category === "B" ? "bg-brand text-white" : "bg-amber-100 text-amber-700"}`}>
-              Cat. {car.category}
-            </span>
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 font-medium text-brand">
-              {c.transmission}: {transmissionLabel}
-            </span>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-700">
-              {c.stage}: {stageLabel}
-            </span>
-          </div>
-        </div>
-        <button type="button" className="btn-secondary shrink-0" onClick={onEdit}>
-          <Icon name="edit" size={18} />
+    <tr className="row-link" onClick={onEdit}>
+      <td className="font-semibold text-slate-900">{car.plate}</td>
+      <td>{car.model}</td>
+      <td>{transmissionLabel}</td>
+      <td>{stageLabel}</td>
+      <td>
+        <span
+          className={`cell-badge ${
+            car.category === "B" ? "bg-brand text-white" : "bg-amber-100 text-amber-700"
+          }`}
+        >
+          {car.category}
+        </span>
+      </td>
+      <td>
+        {driver ? driver.full_name : <span className="text-slate-300">—</span>}
+      </td>
+      {expiries.map((value, i) => (
+        <td key={i}>
+          <span className={"cell-badge " + expiryClasses(expiryLevel(value))}>{fmtDate(value)}</span>
+        </td>
+      ))}
+      <td>
+        {car.active ? (
+          <span className="cell-badge bg-emerald-50 text-emerald-700">{c.active}</span>
+        ) : (
+          <span className="cell-badge bg-slate-200 text-slate-600">Inactivă</span>
+        )}
+      </td>
+      <td>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+        >
+          <Icon name="edit" size={16} />
           <span>{d.common.edit}</span>
         </button>
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {badges.map((b) => (
-          <div
-            key={b.label}
-            className={
-              "flex items-center justify-between rounded-lg border px-3 py-2 text-sm " +
-              expiryClasses(expiryLevel(b.value))
-            }
-          >
-            <span className="font-medium">{b.label}</span>
-            <span className="tabular-nums">{fmtDate(b.value)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 }
 

@@ -64,45 +64,47 @@ export default async function AdminPaymentsPage({
         <span className="text-2xl font-bold leading-none text-brand">{grandTotal}</span>
       </div>
 
-      {/* Listă per instructor */}
+      {/* Listă per instructor — tabele compacte tip Excel */}
       {recon.length === 0 ? (
-        <p className="text-sm text-slate-400">{d.common.noData}</p>
+        <p className="xwrap px-3 py-6 text-center text-sm text-slate-400">{d.common.noData}</p>
       ) : (
-        <ul className="space-y-3">
+        <div className="space-y-4">
           {recon.map((line) => (
-            <li key={line.instructorId}>
-              <details className="card group">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-                  <span className="flex items-center gap-2 font-semibold text-slate-900">
-                    <Icon name="users" size={18} />
-                    {line.instructorName}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-status-completed/15 px-2.5 py-0.5 text-sm font-bold text-status-completed">
-                      {line.count}
-                    </span>
-                    <Icon name="next" size={16} />
-                  </span>
-                </summary>
-                <ul className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">
-                  {line.lessons.map((l) => (
-                    <li
-                      key={l.id}
-                      className="flex items-center justify-between gap-3 text-sm text-slate-600"
-                    >
-                      <span className="tabular-nums text-slate-500">
-                        {dateDMY(l.start_time)} · {timeHM(l.start_time)}
-                      </span>
-                      <span className="truncate font-medium text-slate-800">
-                        {l.student ? studentName(l.student) : d.common.none}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            </li>
+            <section key={line.instructorId} className="space-y-1.5">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <Icon name="users" size={18} />
+                  {line.instructorName}
+                </h2>
+                <span className="cell-badge bg-status-completed/15 text-status-completed">
+                  {line.count}
+                </span>
+              </div>
+              <div className="xwrap">
+                <table className="xtable">
+                  <thead>
+                    <tr>
+                      <th>{d.lesson.date}</th>
+                      <th>{d.lesson.startTime}</th>
+                      <th>{d.lesson.student}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {line.lessons.map((l) => (
+                      <tr key={l.id}>
+                        <td className="tabular-nums text-slate-600">{dateDMY(l.start_time)}</td>
+                        <td className="tabular-nums text-slate-600">{timeHM(l.start_time)}</td>
+                        <td className="font-medium text-slate-800">
+                          {l.student ? studentName(l.student) : d.common.none}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

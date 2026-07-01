@@ -65,21 +65,48 @@ export function ExamsClient({
           {upcoming.length > 0 && (
             <section className="space-y-2">
               <h2 className="section-title">{d.exam.upcoming}</h2>
-              <ul className="space-y-2.5">
-                {upcoming.map((e) => (
-                  <ExamRow key={e.id} e={e} canDelete />
-                ))}
-              </ul>
+              <div className="xwrap">
+                <table className="xtable">
+                  <thead>
+                    <tr>
+                      <th>{d.exam.student}</th>
+                      <th>{d.exam.scheduledAt}</th>
+                      <th>{d.exam.examiner}</th>
+                      <th>{d.exam.result}</th>
+                      <th>{d.exam.mention}</th>
+                      <th className="td-num" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {upcoming.map((e) => (
+                      <ExamRow key={e.id} e={e} canDelete />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           )}
           {done.length > 0 && (
             <section className="space-y-2">
               <h2 className="section-title">{d.exam.done}</h2>
-              <ul className="space-y-2.5">
-                {done.map((e) => (
-                  <ExamRow key={e.id} e={e} />
-                ))}
-              </ul>
+              <div className="xwrap">
+                <table className="xtable">
+                  <thead>
+                    <tr>
+                      <th>{d.exam.student}</th>
+                      <th>{d.exam.scheduledAt}</th>
+                      <th>{d.exam.examiner}</th>
+                      <th>{d.exam.result}</th>
+                      <th>{d.exam.mention}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {done.map((e) => (
+                      <ExamRow key={e.id} e={e} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           )}
         </>
@@ -103,31 +130,31 @@ function ExamRow({ e, canDelete = false }: { e: ExamLite; canDelete?: boolean })
   }
 
   return (
-    <li className="card space-y-2">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-semibold text-slate-900 truncate">{e.studentName}</p>
-          <p className="text-sm text-slate-500">{dateTime(e.scheduled_at)}</p>
-          <p className="text-xs text-slate-400">
-            {d.exam.examiner}: {e.examinerName ?? d.exam.noExaminer}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <span className={"rounded-md px-2 py-0.5 text-xs font-semibold " + badge.cls}>{badge.text}</span>
-          {canDelete && (
-            <button type="button" className="btn-ghost px-2" onClick={onDelete} disabled={pending} aria-label={d.common.delete}>
-              <Icon name="x" size={18} />
-            </button>
-          )}
-        </div>
-      </div>
-      {e.mention && (
-        <p className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-sm text-slate-600">
-          <span className="font-medium text-slate-500">{d.exam.mention}: </span>
-          {e.mention}
-        </p>
+    <tr>
+      <td className="font-semibold text-slate-900">{e.studentName}</td>
+      <td>{dateTime(e.scheduled_at)}</td>
+      <td>{e.examinerName ?? d.exam.noExaminer}</td>
+      <td>
+        <span className={"cell-badge " + badge.cls}>{badge.text}</span>
+      </td>
+      <td>{e.mention ? e.mention : <span className="text-slate-300">—</span>}</td>
+      {canDelete && (
+        <td className="td-num">
+          <button
+            type="button"
+            className="btn-ghost px-2"
+            onClick={(ev) => {
+              ev.stopPropagation();
+              onDelete();
+            }}
+            disabled={pending}
+            aria-label={d.common.delete}
+          >
+            <Icon name="x" size={18} />
+          </button>
+        </td>
       )}
-    </li>
+    </tr>
   );
 }
 

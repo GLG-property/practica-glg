@@ -49,31 +49,47 @@ export function OperatorsClient({ operators }: { operators: OperatorLite[] }) {
       )}
 
       {operators.length === 0 && !adding ? (
-        <div className="card text-center text-sm text-slate-500">
+        <p className="xwrap px-3 py-6 text-center text-sm text-slate-400">
           {d.common.noData}
-        </div>
+        </p>
       ) : (
-        <div className="space-y-2.5">
-          {operators.map((op) =>
-            editingId === op.id ? (
-              <OperatorForm
-                key={op.id}
-                mode="edit"
-                operator={op}
-                onDone={() => setEditingId(null)}
-                onCancel={() => setEditingId(null)}
-              />
-            ) : (
-              <OperatorRow
-                key={op.id}
-                operator={op}
-                onEdit={() => {
-                  setEditingId(op.id);
-                  setAdding(false);
-                }}
-              />
-            )
-          )}
+        <div className="xwrap">
+          <table className="xtable">
+            <thead>
+              <tr>
+                <th>{d.students.lastName}</th>
+                <th>{d.students.phone}</th>
+                <th>{d.lang.switch}</th>
+                <th>{d.groups.status}</th>
+                <th>{d.common.edit}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {operators.map((op) =>
+                editingId === op.id ? (
+                  <tr key={op.id}>
+                    <td colSpan={5} className="p-0">
+                      <OperatorForm
+                        mode="edit"
+                        operator={op}
+                        onDone={() => setEditingId(null)}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  <OperatorRow
+                    key={op.id}
+                    operator={op}
+                    onEdit={() => {
+                      setEditingId(op.id);
+                      setAdding(false);
+                    }}
+                  />
+                )
+              )}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -89,40 +105,34 @@ function OperatorRow({
 }) {
   const { d } = useI18n();
   return (
-    <div className="card flex items-center gap-3">
-      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand">
-        <Icon name="users" size={20} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold text-slate-900 truncate">
-          {operator.full_name}
-        </p>
-        <p className="text-sm text-slate-500 truncate">
-          {operator.phone || d.common.none}
-          <span className="text-slate-300"> · </span>
-          {operator.language_pref.toUpperCase()}
-        </p>
-      </div>
-      <span
-        className={
-          "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold " +
-          (operator.active
-            ? "bg-emerald-50 text-emerald-700"
-            : "bg-slate-100 text-slate-500")
-        }
-      >
-        {operator.active ? d.cars.active : "Inactiv"}
-      </span>
-      <button
-        type="button"
-        className="btn-ghost px-2.5 min-h-tap"
-        onClick={onEdit}
-        title={d.common.edit}
-        aria-label={d.common.edit}
-      >
-        <Icon name="edit" size={18} />
-      </button>
-    </div>
+    <tr>
+      <td className="font-semibold text-slate-900">{operator.full_name}</td>
+      <td>{operator.phone || d.common.none}</td>
+      <td>{operator.language_pref.toUpperCase()}</td>
+      <td>
+        <span
+          className={
+            "cell-badge " +
+            (operator.active
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-slate-200 text-slate-600")
+          }
+        >
+          {operator.active ? d.cars.active : "Inactiv"}
+        </span>
+      </td>
+      <td>
+        <button
+          type="button"
+          className="btn-ghost px-2.5 min-h-tap"
+          onClick={onEdit}
+          title={d.common.edit}
+          aria-label={d.common.edit}
+        >
+          <Icon name="edit" size={18} />
+        </button>
+      </td>
+    </tr>
   );
 }
 

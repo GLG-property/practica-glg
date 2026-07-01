@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
 import { Icon } from "@/components/icons";
 import type { Transmission } from "@/lib/db/types";
@@ -62,13 +63,28 @@ export function OperatorStudentsClient({ students }: { students: OperatorStudent
       </div>
 
       {filtered.length === 0 ? (
-        <p className="card text-sm text-slate-500">{d.common.noData}</p>
+        <p className="xwrap px-3 py-6 text-center text-sm text-slate-400">{d.common.noData}</p>
       ) : (
-        <ul className="space-y-2.5">
-          {filtered.map((s) => (
-            <StudentCard key={s.id} s={s} d={d} fmt={fmt} />
-          ))}
-        </ul>
+        <div className="xwrap">
+          <table className="xtable">
+            <thead>
+              <tr>
+                <th>{d.students.lastName}</th>
+                <th>{d.students.transmission}</th>
+                <th>{d.filters.group}</th>
+                <th className="td-num">{d.filters.age}</th>
+                <th>Faze</th>
+                <th>{d.filters.daysLeftSort}</th>
+                <th>{d.nav.schedule}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((s) => (
+                <StudentRow key={s.id} s={s} d={d} fmt={fmt} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -83,58 +99,46 @@ function daysBadge(daysLeft: number | null, d: any, fmt: any): { text: string; c
   return { text: fmt(d.filters.daysLeft, { n: daysLeft }), cls };
 }
 
-function StudentCard({ s, d, fmt }: { s: OperatorStudentRow; d: any; fmt: any }) {
+function StudentRow({ s, d, fmt }: { s: OperatorStudentRow; d: any; fmt: any }) {
+  const router = useRouter();
   const badge = daysBadge(s.daysLeft, d, fmt);
   const tx = s.transmission === "manual" ? d.students.manual : d.students.automatic;
 
   return (
-    <li className="card">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold text-slate-900 truncate">{s.name}</h2>
-          <p className="text-sm text-slate-500 truncate">
-            {tx}
-            {s.groupName ? " · " + s.groupName : ""}
-            {s.age != null ? " · " + s.age + " " + d.filters.years : ""}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {badge && (
-            <span className={"rounded-md px-2 py-0.5 text-xs font-semibold " + badge.cls}>
-              {badge.text}
-            </span>
-          )}
-          <Link href={"/operator/students/" + s.id} className="btn-ghost h-9 px-2 text-xs">
-            {d.common.open}
-          </Link>
-        </div>
-      </div>
-
-      {/* Faze — compact */}
-      <div className="mt-2.5 flex flex-wrap gap-2">
+    <tr className="row-link" onClick={() => router.push("/operator/students/" + s.id)}>
+      <td className="font-semibold text-slate-900">{s.name}</td>
+      <td>{tx}</td>
+      <td>{s.groupName ?? "—"}</td>
+      <td className="td-num">{s.age ?? "—"}</td>
+      <td>
         {s.assignments.length === 0 ? (
-          <p className="text-sm text-slate-400">{d.common.noData}</p>
+          <span className="text-slate-300">—</span>
         ) : (
-          s.assignments.map((a) => (
-            <span
-              key={a.phase}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2 py-1 text-xs"
-            >
-              <span className="font-semibold text-slate-600">
-                {a.phase === 1 ? d.students.phase1 : d.students.phase2}
+          <span className="flex flex-wrap gap-1">
+            {s.assignments.map((a) => (
+              <span key={a.phase} className="cell-badge bg-slate-100 text-slate-600 tabular-nums">
+                F{a.phase} {a.booked}/{a.requiredLessons}
               </span>
-              <span className="tabular-nums font-semibold text-slate-800">
-                {a.booked}/{a.requiredLessons}
-              </span>
-              <span className="text-slate-500 truncate max-w-[10rem]">· {a.instructorName}</span>
-            </span>
-          ))
+            ))}
+          </span>
         )}
-      </div>
-
-      <Link href={"/operator/schedule/" + s.id} className="btn-primary w-full mt-3">
-        <Icon name="plus" size={16} /> {d.nav.schedule}
-      </Link>
-    </li>
+      </td>
+      <td>
+        {badge ? (
+          <span className={"cell-badge " + badge.cls}>{badge.text}</span>
+        ) : (
+          <span className="text-slate-300">—</span>
+        )}
+      </td>
+      <td>
+        <Link
+          href={"/operator/schedule/" + s.id}
+          className="btn-ghost h-8 px-2 text-xs"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Icon name="plus" size={14} /> {d.nav.schedule}
+        </Link>
+      </td>
+    </tr>
   );
 }

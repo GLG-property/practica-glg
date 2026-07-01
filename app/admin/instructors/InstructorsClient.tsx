@@ -72,72 +72,90 @@ export function InstructorsClient({
       )}
 
       {instructors.length === 0 && !adding ? (
-        <p className="card text-sm text-slate-500">{d.common.noData}</p>
+        <p className="xwrap px-3 py-6 text-center text-sm text-slate-400">{d.common.noData}</p>
       ) : (
-        <ul className="space-y-3">
-          {instructors.map((inst) => {
-            const car = inst.assigned_car_id
-              ? carById.get(inst.assigned_car_id)
-              : null;
-            const isEditing = editingId === inst.id;
+        <div className="xwrap">
+          <table className="xtable">
+            <thead>
+              <tr>
+                <th>{d.students.lastName}</th>
+                <th>{d.students.phone}</th>
+                <th>{d.instructors.car}</th>
+                <th className="td-num">Program</th>
+                <th>{d.groups.status}</th>
+                <th>Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody>
+              {instructors.map((inst) => {
+                const car = inst.assigned_car_id
+                  ? carById.get(inst.assigned_car_id)
+                  : null;
+                const isEditing = editingId === inst.id;
 
-            return (
-              <li key={inst.id}>
-                {isEditing ? (
-                  <InstructorForm
-                    mode="edit"
-                    cars={cars}
-                    initial={inst}
-                    onClose={() => setEditingId(null)}
-                  />
-                ) : (
-                  <div
-                    className={
-                      "card flex items-center justify-between gap-3 " +
-                      (inst.active ? "" : "opacity-50")
-                    }
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-900 truncate">
-                          {inst.full_name}
+                if (isEditing) {
+                  return (
+                    <tr key={inst.id}>
+                      <td colSpan={6} className="p-2">
+                        <InstructorForm
+                          mode="edit"
+                          cars={cars}
+                          initial={inst}
+                          onClose={() => setEditingId(null)}
+                        />
+                      </td>
+                    </tr>
+                  );
+                }
+
+                return (
+                  <tr key={inst.id} className={inst.active ? "" : "opacity-60"}>
+                    <td className="font-semibold text-slate-900">
+                      {inst.full_name}
+                    </td>
+                    <td>
+                      {inst.phone || <span className="text-slate-300">—</span>}
+                    </td>
+                    <td>
+                      {car ? (
+                        carLabel(car)
+                      ) : (
+                        <span className="text-slate-300">{d.common.none}</span>
+                      )}
+                    </td>
+                    <td className="td-num">
+                      {inst.work_start.slice(0, 5)}–{inst.work_end.slice(0, 5)}
+                    </td>
+                    <td>
+                      {inst.active ? (
+                        <span className="cell-badge bg-emerald-50 text-emerald-700">
+                          {d.cars.active}
                         </span>
-                        {!inst.active && (
-                          <span className="shrink-0 rounded-md bg-slate-200 px-1.5 py-0.5 text-xs font-medium text-slate-600">
-                            inactiv
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-1 flex flex-col gap-0.5 text-sm text-slate-500">
-                        {inst.phone && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Icon name="phone" size={14} />
-                            {inst.phone}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center gap-1.5">
-                          <Icon name="car" size={14} />
-                          {car ? carLabel(car) : d.common.none}
+                      ) : (
+                        <span className="cell-badge bg-slate-200 text-slate-600">
+                          inactiv
                         </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-secondary shrink-0"
-                      onClick={() => {
-                        setAdding(false);
-                        setEditingId(inst.id);
-                      }}
-                    >
-                      <Icon name="edit" size={16} />
-                      {d.common.edit}
-                    </button>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-secondary shrink-0"
+                        onClick={() => {
+                          setAdding(false);
+                          setEditingId(inst.id);
+                        }}
+                      >
+                        <Icon name="edit" size={16} />
+                        {d.common.edit}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

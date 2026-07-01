@@ -34,6 +34,7 @@ export function StaffClient({
   const { d } = useI18n();
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const editingMember = editingId ? staff.find((m) => m.id === editingId) ?? null : null;
 
   return (
     <div className="space-y-4">
@@ -56,24 +57,44 @@ export function StaffClient({
         <StaffForm mode="create" role={role} onDone={() => setAdding(false)} onCancel={() => setAdding(false)} />
       )}
 
+      {editingMember && (
+        <StaffForm
+          mode="edit"
+          role={role}
+          member={editingMember}
+          onDone={() => setEditingId(null)}
+          onCancel={() => setEditingId(null)}
+        />
+      )}
+
       {staff.length === 0 && !adding ? (
-        <div className="card text-center text-sm text-slate-500">{d.common.noData}</div>
+        <p className="xwrap px-3 py-6 text-center text-sm text-slate-400">{d.common.noData}</p>
       ) : (
-        <div className="space-y-2.5">
-          {staff.map((m) =>
-            editingId === m.id ? (
-              <StaffForm
-                key={m.id}
-                mode="edit"
-                role={role}
-                member={m}
-                onDone={() => setEditingId(null)}
-                onCancel={() => setEditingId(null)}
-              />
-            ) : (
-              <StaffRow key={m.id} member={m} icon={icon} onEdit={() => { setEditingId(m.id); setAdding(false); }} />
-            )
-          )}
+        <div className="xwrap">
+          <table className="xtable">
+            <thead>
+              <tr>
+                <th>{d.students.lastName}</th>
+                <th>{d.students.phone}</th>
+                <th>{d.lang.switch}</th>
+                <th>{d.groups.status}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {staff.map((m) => (
+                <StaffRow
+                  key={m.id}
+                  member={m}
+                  icon={icon}
+                  onEdit={() => {
+                    setEditingId(m.id);
+                    setAdding(false);
+                  }}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -83,30 +104,32 @@ export function StaffClient({
 function StaffRow({ member, icon, onEdit }: { member: StaffLite; icon: IconName; onEdit: () => void }) {
   const { d } = useI18n();
   return (
-    <div className="card flex items-center gap-3">
-      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand">
-        <Icon name={icon} size={20} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold text-slate-900 truncate">{member.full_name}</p>
-        <p className="text-sm text-slate-500 truncate">
-          {member.phone || d.common.none}
-          <span className="text-slate-300"> · </span>
-          {member.language_pref.toUpperCase()}
-        </p>
-      </div>
-      <span
-        className={
-          "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold " +
-          (member.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500")
-        }
-      >
-        {member.active ? d.cars.active : d.filters.archived}
-      </span>
-      <button type="button" className="btn-ghost px-2.5 min-h-tap" onClick={onEdit} aria-label={d.common.edit}>
-        <Icon name="edit" size={18} />
-      </button>
-    </div>
+    <tr>
+      <td className="font-semibold text-slate-900">
+        <span className="inline-flex items-center gap-2">
+          <Icon name={icon} size={16} className="text-slate-400" />
+          {member.full_name}
+        </span>
+      </td>
+      <td>{member.phone || d.common.none}</td>
+      <td>{member.language_pref.toUpperCase()}</td>
+      <td>
+        <span
+          className={
+            "cell-badge " +
+            (member.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-200 text-slate-600")
+          }
+        >
+          {member.active ? d.cars.active : d.filters.archived}
+        </span>
+      </td>
+      <td className="td-num">
+        <button type="button" className="btn-ghost px-2 py-1 text-sm" onClick={onEdit} aria-label={d.common.edit}>
+          <Icon name="edit" size={16} />
+          {d.common.edit}
+        </button>
+      </td>
+    </tr>
   );
 }
 

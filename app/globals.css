@@ -55,6 +55,41 @@ body {
   .section-title {
     @apply text-base font-semibold text-slate-800;
   }
+
+  /* ---- Tabele „Excel-like": compacte, cu linii de grilă, zebra, antet lipit ---- */
+  .xwrap {
+    @apply w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-card;
+  }
+  .xtable {
+    @apply w-full border-collapse text-sm;
+  }
+  .xtable thead th {
+    @apply sticky top-0 z-10 whitespace-nowrap border-b border-r border-slate-200 bg-slate-100
+           px-2.5 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600;
+  }
+  .xtable tbody td {
+    @apply whitespace-nowrap border-b border-r border-slate-100 px-2.5 py-1.5 text-slate-800 align-middle;
+  }
+  .xtable th:last-child,
+  .xtable td:last-child {
+    @apply border-r-0;
+  }
+  .xtable tbody tr:nth-child(even) {
+    @apply bg-slate-50/70;
+  }
+  .xtable tbody tr:hover {
+    @apply bg-brand-50/50;
+  }
+  .xtable .row-link {
+    @apply cursor-pointer;
+  }
+  .td-num {
+    @apply text-right tabular-nums;
+  }
+  /* Insignă compactă pentru celule de status. */
+  .cell-badge {
+    @apply inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {
