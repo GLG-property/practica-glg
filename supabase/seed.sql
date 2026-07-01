@@ -2,7 +2,7 @@
 --  GLG Property — Seed REAL (toate vehiculele + instructorii)
 -- ============================================================
 --  Admin (8 cifre):  12345678
---  Operatori (5 cifre): Cristina 50001 · Svetlana 50002 · Lilia 50003 · Jardan 50004
+--  Operatori (5 cifre): Cristina 50001 · Svetlana 50002 · Lilia 50003 · Catalina 50005
 --  Instructori: coduri 10001..10050 (vezi supabase/INSTRUCTORI_CODURI.txt)
 --  Categorii: B = auto (Fabia/Toyota = faza 1; Scala = faza 2), C = camion, D = autobuz, A = moto.
 --  Cutie: secția "Cutia automată" = automată (Scala aut + Toyota); restul = mecanică.
@@ -19,7 +19,7 @@ insert into public.users (id, role, full_name, code_hash, language_pref) values
   ('a0000000-0000-4000-8000-000000000011', 'operator', 'Cristina', crypt('50001', gen_salt('bf',8)), 'ro'),
   ('a0000000-0000-4000-8000-000000000012', 'operator', 'Svetlana', crypt('50002', gen_salt('bf',8)), 'ro'),
   ('a0000000-0000-4000-8000-000000000013', 'operator', 'Lilia',    crypt('50003', gen_salt('bf',8)), 'ro'),
-  ('a0000000-0000-4000-8000-000000000014', 'operator', 'Jardan',   crypt('50004', gen_salt('bf',8)), 'ro');
+  ('a0000000-0000-4000-8000-000000000014', 'operator', 'Catalina', crypt('50005', gen_salt('bf',8)), 'ro');
 
 -- ===== MAȘINI (toate vehiculele) =====
 insert into public.cars (plate, model, transmission, stage, category, notes) values

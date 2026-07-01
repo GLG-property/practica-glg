@@ -112,6 +112,7 @@ export const dictionaries = {
       scheduleFor: "Programează pentru {name}", pickInstructor: "Alege instructorul",
       empty: "Încă nu ai primit cursanți.",
       changeInstructor: "Schimbă instructor (concediu/schimb)", reassigned: "Instructor schimbat",
+      myInstructors: "Instructorii mei", allInstructors: "Toți instructorii",
     },
     cars: {
       title: "Mașini", addNew: "Mașină nouă", plate: "Număr", model: "Model",
@@ -253,6 +254,7 @@ export const dictionaries = {
       scheduleFor: "Запись для {name}", pickInstructor: "Выберите инструктора",
       empty: "Вы ещё не получили учеников.",
       changeInstructor: "Сменить инструктора (отпуск/замена)", reassigned: "Инструктор изменён",
+      myInstructors: "Мои инструкторы", allInstructors: "Все инструкторы",
     },
     cars: {
       title: "Машины", addNew: "Новая машина", plate: "Номер", model: "Модель",

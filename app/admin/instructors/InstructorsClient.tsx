@@ -8,6 +8,7 @@ import type { LangPref } from "@/lib/db/types";
 import {
   createInstructorAction,
   updateInstructorAction,
+  removeInstructorKeepCarAction,
 } from "@/app/admin/actions/instructors";
 
 export interface InstructorRow {
@@ -16,6 +17,7 @@ export interface InstructorRow {
   phone: string | null;
   language_pref: LangPref;
   assigned_car_id: string | null;
+  operator_id: string | null;
   active: boolean;
   work_start: string;
   work_end: string;
@@ -27,6 +29,11 @@ export interface CarRow {
   plate: string;
 }
 
+export interface OperatorRow {
+  id: string;
+  name: string;
+}
+
 function carLabel(car: CarRow): string {
   return car.plate ? car.model + " · " + car.plate : car.model;
 }
@@ -34,15 +41,25 @@ function carLabel(car: CarRow): string {
 export function InstructorsClient({
   instructors,
   cars,
+  operators,
 }: {
   instructors: InstructorRow[];
   cars: CarRow[];
+  operators: OperatorRow[];
 }) {
   const { d } = useI18n();
+  const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const carById = new Map(cars.map((c) => [c.id, c]));
+  const opById = new Map(operators.map((o) => [o.id, o.name]));
+
+  async function onRemove(inst: InstructorRow) {
+    if (!confirm(`Ștergi instructorul ${inst.full_name}? (mașina rămâne în flotă)`)) return;
+    const res = await removeInstructorKeepCarAction(inst.id);
+    if (res.ok) router.refresh();
+  }
 
   return (
     <div className="space-y-4">
@@ -67,6 +84,7 @@ export function InstructorsClient({
         <InstructorForm
           mode="create"
           cars={cars}
+          operators={operators}
           onClose={() => setAdding(false)}
         />
       )}
@@ -81,6 +99,7 @@ export function InstructorsClient({
                 <th>{d.students.lastName}</th>
                 <th>{d.students.phone}</th>
                 <th>{d.instructors.car}</th>
+                <th>{d.roles.operator}</th>
                 <th className="td-num">Program</th>
                 <th>{d.groups.status}</th>
                 <th>Acțiuni</th>
@@ -96,10 +115,11 @@ export function InstructorsClient({
                 if (isEditing) {
                   return (
                     <tr key={inst.id}>
-                      <td colSpan={6} className="p-2">
+                      <td colSpan={7} className="p-2">
                         <InstructorForm
                           mode="edit"
                           cars={cars}
+                          operators={operators}
                           initial={inst}
                           onClose={() => setEditingId(null)}
                         />
@@ -123,6 +143,13 @@ export function InstructorsClient({
                         <span className="text-slate-300">{d.common.none}</span>
                       )}
                     </td>
+                    <td>
+                      {inst.operator_id && opById.get(inst.operator_id) ? (
+                        opById.get(inst.operator_id)
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
                     <td className="td-num">
                       {inst.work_start.slice(0, 5)}–{inst.work_end.slice(0, 5)}
                     </td>
@@ -138,17 +165,30 @@ export function InstructorsClient({
                       )}
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        className="btn-secondary shrink-0"
-                        onClick={() => {
-                          setAdding(false);
-                          setEditingId(inst.id);
-                        }}
-                      >
-                        <Icon name="edit" size={16} />
-                        {d.common.edit}
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="btn-ghost px-2"
+                          onClick={() => {
+                            setAdding(false);
+                            setEditingId(inst.id);
+                          }}
+                          aria-label={d.common.edit}
+                        >
+                          <Icon name="edit" size={16} />
+                        </button>
+                        {inst.active && (
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 text-status-noshow"
+                            onClick={() => onRemove(inst)}
+                            aria-label={d.common.delete}
+                            title="Șterge instructor (mașina rămâne)"
+                          >
+                            <Icon name="x" size={16} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -164,11 +204,13 @@ export function InstructorsClient({
 function InstructorForm({
   mode,
   cars,
+  operators,
   initial,
   onClose,
 }: {
   mode: "create" | "edit";
   cars: CarRow[];
+  operators: OperatorRow[];
   initial?: InstructorRow;
   onClose: () => void;
 }) {
@@ -181,6 +223,7 @@ function InstructorForm({
     initial?.language_pref ?? "ro"
   );
   const [carId, setCarId] = useState(initial?.assigned_car_id ?? "");
+  const [operatorId, setOperatorId] = useState(initial?.operator_id ?? "");
   const [code, setCode] = useState("");
   const [active, setActive] = useState(initial?.active ?? true);
   const [workStart, setWorkStart] = useState((initial?.work_start ?? "08:00").slice(0, 5));
@@ -201,6 +244,7 @@ function InstructorForm({
       fd.set("phone", phone);
       fd.set("language_pref", language);
       fd.set("assigned_car_id", carId);
+      fd.set("operator_id", operatorId);
       fd.set("code", code);
       fd.set("work_start", workStart);
       fd.set("work_end", workEnd);
@@ -212,6 +256,7 @@ function InstructorForm({
         phone: phone,
         language_pref: language,
         assigned_car_id: carId || null,
+        operator_id: operatorId || null,
         active,
         code: code || null,
         work_start: workStart,
@@ -302,6 +347,22 @@ function InstructorForm({
             <option key={c.id} value={c.id}>
               {carLabel(c)}
             </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="label" htmlFor="operator_id">{d.roles.operator}</label>
+        <select
+          id="operator_id"
+          name="operator_id"
+          className="input"
+          value={operatorId}
+          onChange={(e) => setOperatorId(e.target.value)}
+        >
+          <option value="">{d.common.none}</option>
+          {operators.map((o) => (
+            <option key={o.id} value={o.id}>{o.name}</option>
           ))}
         </select>
       </div>

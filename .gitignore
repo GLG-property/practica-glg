@@ -42,3 +42,4 @@ supabase/INSTRUCTORI_CODURI.txt
 # conturi personal (PIN-uri) — NU în repo
 staff_seed.sql
 CODURI_PERSONAL.txt
+operator_mapping.sql

@@ -23,6 +23,12 @@ const optionalCarId = z.preprocess((v) => {
   return s.length ? s : null;
 }, z.string().uuid().nullable());
 
+/** UUID opțional pentru operatorul care gestionează instructorul (gol => null). */
+const optionalOperatorId = z.preprocess((v) => {
+  const s = (v ?? "").toString().trim();
+  return s.length ? s : null;
+}, z.string().uuid().nullable());
+
 /** Cod opțional (la editare): gol => string gol. */
 const optionalCode = z.preprocess(
   (v) => (v == null ? "" : v.toString().trim()),
@@ -38,6 +44,7 @@ const createSchema = z.object({
   phone: nullableText,
   language_pref: langEnum,
   assigned_car_id: optionalCarId,
+  operator_id: optionalOperatorId,
   code: z.string(),
   work_start: timeHM,
   work_end: timeHM,
@@ -51,6 +58,7 @@ export async function createInstructorAction(formData: FormData) {
     phone: formData.get("phone"),
     language_pref: formData.get("language_pref"),
     assigned_car_id: formData.get("assigned_car_id"),
+    operator_id: formData.get("operator_id"),
     code: (formData.get("code") ?? "").toString().trim(),
     work_start: (formData.get("work_start") || "08:00").toString(),
     work_end: (formData.get("work_end") || "18:00").toString(),
@@ -77,6 +85,7 @@ export async function createInstructorAction(formData: FormData) {
       phone: parsed.data.phone,
       language_pref: parsed.data.language_pref,
       assigned_car_id: parsed.data.assigned_car_id,
+      operator_id: parsed.data.operator_id,
       code_hash,
       work_start: parsed.data.work_start,
       work_end: parsed.data.work_end,
@@ -106,6 +115,7 @@ const updateSchema = z.object({
   phone: nullableText,
   language_pref: langEnum,
   assigned_car_id: optionalCarId,
+  operator_id: optionalOperatorId,
   active: z.boolean(),
   code: optionalCode,
   work_start: timeHM,
@@ -118,6 +128,7 @@ export interface UpdateInstructorInput {
   phone?: string | null;
   language_pref: "ro" | "ru";
   assigned_car_id?: string | null;
+  operator_id?: string | null;
   active: boolean;
   /** Cod nou din 5 cifre; gol => se păstrează codul existent. */
   code?: string | null;
@@ -139,6 +150,7 @@ export async function updateInstructorAction(input: UpdateInstructorInput) {
     phone: parsed.data.phone,
     language_pref: parsed.data.language_pref,
     assigned_car_id: parsed.data.assigned_car_id,
+    operator_id: parsed.data.operator_id,
     active: parsed.data.active,
     work_start: parsed.data.work_start,
     work_end: parsed.data.work_end,
@@ -174,6 +186,47 @@ export async function updateInstructorAction(input: UpdateInstructorInput) {
     entityId: parsed.data.id,
     details: { active: parsed.data.active, codeReset },
   });
+  revalidatePath("/admin/instructors");
+  return { ok: true as const };
+}
+
+/**
+ * „Șterge instructorul, dar păstrează mașina" (ex. concediat).
+ * Îl dezactivează și îi eliberează mașina (mașina rămâne în flotă).
+ */
+export async function removeInstructorKeepCarAction(instructorId: string) {
+  const admin = await requireAdmin();
+  if (!z.string().uuid().safeParse(instructorId).success) return { ok: false as const };
+
+  const supabase = getAdminClient();
+  const { error } = await supabase
+    .from("users")
+    .update({ active: false, assigned_car_id: null })
+    .eq("id", instructorId)
+    .eq("role", "instructor");
+  if (error) return { ok: false as const };
+
+  await audit({ userId: admin.id, action: "instructor.remove_keep_car", entity: "user", entityId: instructorId });
+  revalidatePath("/admin/instructors");
+  revalidatePath("/admin/cars");
+  return { ok: true as const };
+}
+
+/** Atribuie/schimbă operatorul care gestionează un instructor. */
+export async function setInstructorOperatorAction(instructorId: string, operatorId: string | null) {
+  const admin = await requireAdmin();
+  if (!z.string().uuid().safeParse(instructorId).success) return { ok: false as const };
+  if (operatorId && !z.string().uuid().safeParse(operatorId).success) return { ok: false as const };
+
+  const supabase = getAdminClient();
+  const { error } = await supabase
+    .from("users")
+    .update({ operator_id: operatorId })
+    .eq("id", instructorId)
+    .eq("role", "instructor");
+  if (error) return { ok: false as const };
+
+  await audit({ userId: admin.id, action: "instructor.set_operator", entity: "user", entityId: instructorId, details: { operatorId } });
   revalidatePath("/admin/instructors");
   return { ok: true as const };
 }

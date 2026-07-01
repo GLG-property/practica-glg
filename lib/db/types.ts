@@ -39,6 +39,8 @@ export interface User {
   photo_url: string | null;
   language_pref: LangPref;
   assigned_car_id: string | null;
+  /** Pentru instructori: operatorul care îi gestionează graficul. */
+  operator_id: string | null;
   active: boolean;
   failed_attempts: number;
   locked_until: string | null;

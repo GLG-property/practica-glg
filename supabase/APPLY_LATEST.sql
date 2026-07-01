@@ -1,6 +1,6 @@
--- GLG Property — ACTUALIZARE pentru baza EXISTENTĂ (nu șterge date)
--- Rulează o singură dată. Dacă apare eroarea 'ALTER TYPE ... cannot be run inside a
--- transaction block', rulează întâi separat cele două linii ALTER TYPE din 0009, apoi restul.
+-- GLG Property — ACTUALIZARE pentru baza EXISTENTĂ (nu șterge date). Rulează o singură dată.
+-- Dacă apare 'ALTER TYPE ... cannot be run inside a transaction block', rulează întâi separat
+-- cele două linii ALTER TYPE din 0009, apoi restul.
 
 -- ###### 0007_group_period ######
 -- ============================================================
@@ -93,4 +93,16 @@ create index if not exists idx_theory_absences_student on public.theory_absences
 -- 5) RLS (backstop — accesul real e prin service_role pe server).
 alter table public.exams           enable row level security;
 alter table public.theory_absences enable row level security;
+
+-- ###### 0010_operator_instructor ######
+-- ============================================================
+--  GLG Property — Migrație 0010: instructor -> operator care îl gestionează
+-- ============================================================
+--  Fiecare instructor are un operator care îi ține graficul (mei / toți).
+--  NEDISTRUCTIV.
+-- ============================================================
+
+alter table public.users
+  add column if not exists operator_id uuid references public.users(id) on delete set null;
+create index if not exists idx_users_operator on public.users (operator_id);
 
