@@ -78,5 +78,7 @@ export async function requireRole(...roles: UserRole[]): Promise<SessionUser> {
 export const requireAdmin = () => requireRole("admin");
 export const requireOperator = () => requireRole("operator");
 export const requireInstructor = () => requireRole("instructor");
+export const requireTheory = () => requireRole("theory");
+export const requireExaminer = () => requireRole("examiner");
 
 export { COOKIE_NAME };

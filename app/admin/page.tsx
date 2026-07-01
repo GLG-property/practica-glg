@@ -25,8 +25,11 @@ export default async function AdminDashboardPage() {
   ];
 
   const quickLinks: { href: string; label: string; icon: IconName }[] = [
+    { href: "/admin/exams", label: d.nav.exams, icon: "exam" },
     { href: "/admin/instructors", label: d.nav.instructors, icon: "users" },
     { href: "/admin/operators", label: d.nav.operators, icon: "users" },
+    { href: "/admin/theory-teachers", label: d.nav.theoryTeachers, icon: "teacher" },
+    { href: "/admin/examiners", label: d.nav.examiners, icon: "award" },
     { href: "/admin/cars", label: d.nav.cars, icon: "car" },
     { href: "/admin/audit", label: d.nav.audit, icon: "history" },
     { href: "/admin/reports", label: d.nav.reports, icon: "report" },

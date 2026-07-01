@@ -1,6 +1,6 @@
 // Tipuri TypeScript care reflectă schema bazei de date (arhitectura cu 3 roluri).
 
-export type UserRole = "admin" | "operator" | "instructor";
+export type UserRole = "admin" | "operator" | "instructor" | "theory" | "examiner";
 export type Transmission = "manual" | "automatic";
 export type CarStage = "beginner" | "advanced";
 export type LessonStatus = "scheduled" | "completed" | "no_show" | "cancelled";
@@ -48,10 +48,36 @@ export interface User {
   created_at: string;
 }
 
+export type ExamResult = "pending" | "admis" | "respins";
+
+export interface Exam {
+  id: string;
+  student_id: string;
+  exam_type: string;
+  scheduled_at: string;
+  examiner_id: string | null;
+  result: ExamResult;
+  mention: string | null;
+  result_at: string | null;
+  result_by: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface TheoryAbsence {
+  id: string;
+  student_id: string;
+  group_id: string | null;
+  date: string;
+  marked_by: string | null;
+  created_at: string;
+}
+
 export interface Group {
   id: string;
   name: string;
   theory_teacher: string | null;
+  theory_teacher_id: string | null;
   status: GroupStatus;
   start_date: string | null;
   end_date: string | null;

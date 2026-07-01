@@ -18,9 +18,11 @@ const dateField = z.preprocess(
 
 // ---------------- CREATE GROUP ----------------
 
+const uuidField = z.preprocess(emptyToNull, z.string().uuid().nullable());
+
 const createSchema = z.object({
   name: z.string().trim().min(1).max(120),
-  theory_teacher: nullableText(120),
+  theory_teacher_id: uuidField,
   start_date: dateField,
   end_date: dateField,
 });
@@ -31,7 +33,7 @@ export async function createGroupAction(formData: FormData) {
 
   const parsed = createSchema.safeParse({
     name: formData.get("name"),
-    theory_teacher: formData.get("theory_teacher"),
+    theory_teacher_id: formData.get("theory_teacher_id"),
     start_date: formData.get("start_date"),
     end_date: formData.get("end_date"),
   });
@@ -41,11 +43,26 @@ export async function createGroupAction(formData: FormData) {
   }
 
   const supabase = getAdminClient();
+
+  // Numele profesorului teoretic (pentru afișare) se ia din contul selectat.
+  let theoryName: string | null = null;
+  if (parsed.data.theory_teacher_id) {
+    const { data: t } = await supabase
+      .from("users")
+      .select("full_name")
+      .eq("id", parsed.data.theory_teacher_id)
+      .eq("role", "theory")
+      .single();
+    if (!t) return { ok: false as const, error: "invalid" };
+    theoryName = (t as { full_name: string }).full_name;
+  }
+
   const { data, error } = await supabase
     .from("groups")
     .insert({
       name: parsed.data.name,
-      theory_teacher: parsed.data.theory_teacher,
+      theory_teacher: theoryName,
+      theory_teacher_id: parsed.data.theory_teacher_id,
       start_date: parsed.data.start_date,
       end_date: parsed.data.end_date,
       status: "draft",

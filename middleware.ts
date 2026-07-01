@@ -82,6 +82,8 @@ const ROLE_PREFIX: Record<string, string> = {
   admin: "/admin",
   operator: "/operator",
   instructor: "/instructor",
+  theory: "/theory",
+  examiner: "/examiner",
 };
 
 export async function middleware(req: NextRequest) {

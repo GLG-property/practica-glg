@@ -2,9 +2,10 @@ import "server-only";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { computePaymentStates } from "@/lib/payments";
 import { daysUntil, ageFromBirth, isGroupArchived } from "@/lib/utils/date";
+import { computePace, type PaceStatus } from "@/lib/utils/pace";
 import type {
-  Car, Group, LessonWithRelations, PaymentState, Student, StudentInstructor,
-  StudentRemark, User,
+  Car, Exam, Group, LessonWithRelations, PaymentState, Student, StudentInstructor,
+  StudentRemark, User, UserRole,
 } from "@/lib/db/types";
 
 const LESSON_SELECT =
@@ -172,7 +173,7 @@ export async function getCarById(id: string | null): Promise<Car | null> {
   return (data as Car) ?? null;
 }
 
-export async function getUsersByRole(role: "admin" | "operator" | "instructor"): Promise<User[]> {
+export async function getUsersByRole(role: UserRole): Promise<User[]> {
   const supabase = getAdminClient();
   const { data, error } = await supabase.from("users").select("*").eq("role", role).order("full_name");
   if (error) throw error;
@@ -181,6 +182,130 @@ export async function getUsersByRole(role: "admin" | "operator" | "instructor"):
 
 export const getAllInstructors = () => getUsersByRole("instructor");
 export const getAllOperators = () => getUsersByRole("operator");
+export const getAllTheoryTeachers = () => getUsersByRole("theory");
+export const getAllExaminers = () => getUsersByRole("examiner");
+
+// ---------------- EXAMENE ----------------
+
+export interface ExamRow extends Exam {
+  studentName: string;
+  examinerName: string | null;
+}
+
+function mapExamRow(e: Record<string, unknown>): ExamRow {
+  const st = Array.isArray(e.student) ? e.student[0] : (e.student as { first_name: string; last_name: string } | null);
+  const ex = Array.isArray(e.examiner) ? e.examiner[0] : (e.examiner as { full_name: string } | null);
+  const { student: _s, examiner: _x, ...rest } = e;
+  return {
+    ...(rest as unknown as Exam),
+    studentName: st ? st.last_name + " " + st.first_name : "—",
+    examinerName: ex?.full_name ?? null,
+  };
+}
+
+const EXAM_SELECT =
+  "*, student:students(first_name,last_name), examiner:users!exams_examiner_id_fkey(full_name)";
+
+/** Toate examenele (pentru admin), cele mai noi primele. */
+export async function getExamsForAdmin(): Promise<ExamRow[]> {
+  const supabase = getAdminClient();
+  const { data } = await supabase.from("exams").select(EXAM_SELECT).order("scheduled_at", { ascending: false });
+  return ((data as Record<string, unknown>[]) ?? []).map(mapExamRow);
+}
+
+/** Examenele atribuite unui examinator, cele mai apropiate primele. */
+export async function getExamsForExaminer(examinerId: string): Promise<ExamRow[]> {
+  const supabase = getAdminClient();
+  const { data } = await supabase
+    .from("exams")
+    .select(EXAM_SELECT)
+    .eq("examiner_id", examinerId)
+    .order("scheduled_at", { ascending: true });
+  return ((data as Record<string, unknown>[]) ?? []).map(mapExamRow);
+}
+
+// ---------------- TEORIE / ABSENȚE ----------------
+
+export interface TheoryGroupRow {
+  id: string;
+  name: string;
+  end_date: string | null;
+  archived: boolean;
+  studentCount: number;
+}
+
+/** Grupele atribuite unui profesor teoretic (după theory_teacher_id). */
+export async function getGroupsForTheoryTeacher(teacherId: string): Promise<TheoryGroupRow[]> {
+  const supabase = getAdminClient();
+  const { data: groups } = await supabase
+    .from("groups")
+    .select("id, name, end_date, archived")
+    .eq("theory_teacher_id", teacherId)
+    .order("created_at", { ascending: false });
+  const list = (groups as { id: string; name: string; end_date: string | null; archived: boolean }[]) ?? [];
+  if (list.length === 0) return [];
+
+  const ids = list.map((g) => g.id);
+  const { data: studs } = await supabase.from("students").select("group_id").in("group_id", ids);
+  const counts = new Map<string, number>();
+  for (const s of (studs as { group_id: string }[]) ?? []) {
+    counts.set(s.group_id, (counts.get(s.group_id) ?? 0) + 1);
+  }
+  return list.map((g) => ({ ...g, studentCount: counts.get(g.id) ?? 0 }));
+}
+
+export interface AttendanceStudent {
+  id: string;
+  name: string;
+  absent: boolean; // pentru data selectată
+  absencesTotal: number;
+}
+
+export interface TheoryGroupDetail {
+  group: { id: string; name: string };
+  students: AttendanceStudent[];
+}
+
+/**
+ * Detaliul unei grupe pentru profesorul teoretic la o anumită dată.
+ * Întoarce null dacă grupa nu-i aparține profesorului (verificare de proprietate).
+ */
+export async function getTheoryGroupDetail(
+  groupId: string,
+  teacherId: string,
+  date: string
+): Promise<TheoryGroupDetail | null> {
+  const supabase = getAdminClient();
+  const { data: group } = await supabase
+    .from("groups")
+    .select("id, name, theory_teacher_id")
+    .eq("id", groupId)
+    .single();
+  if (!group || (group as { theory_teacher_id: string | null }).theory_teacher_id !== teacherId) return null;
+
+  const [{ data: studs }, { data: dayAbs }, { data: allAbs }] = await Promise.all([
+    supabase.from("students").select("id, first_name, last_name").eq("group_id", groupId).order("last_name"),
+    supabase.from("theory_absences").select("student_id").eq("group_id", groupId).eq("date", date),
+    supabase.from("theory_absences").select("student_id").eq("group_id", groupId),
+  ]);
+
+  const absentToday = new Set(((dayAbs as { student_id: string }[]) ?? []).map((a) => a.student_id));
+  const totals = new Map<string, number>();
+  for (const a of (allAbs as { student_id: string }[]) ?? []) {
+    totals.set(a.student_id, (totals.get(a.student_id) ?? 0) + 1);
+  }
+
+  const students: AttendanceStudent[] = ((studs as { id: string; first_name: string; last_name: string }[]) ?? []).map(
+    (s) => ({
+      id: s.id,
+      name: s.last_name + " " + s.first_name,
+      absent: absentToday.has(s.id),
+      absencesTotal: totals.get(s.id) ?? 0,
+    })
+  );
+
+  return { group: { id: (group as { id: string }).id, name: (group as { name: string }).name }, students };
+}
 
 export async function getAllCars(): Promise<Car[]> {
   const supabase = getAdminClient();
@@ -223,18 +348,37 @@ export interface AdminStudentRow extends Student {
   isArchived: boolean; // grupa lui e arhivată
   daysLeft: number | null; // zile rămase din perioada grupei
   age: number | null;
+  completedPractical: number; // lecții practice efectuate (ambele faze)
+  pace: PaceStatus; // ritmul față de perioada grupei
 }
 
-/** Lista de cursanți pentru admin: cu grupă, vârstă, zile rămase și status de arhivă. */
+/** Lista de cursanți pentru admin: cu grupă, vârstă, zile rămase, ritm și status de arhivă. */
 export async function getAdminStudents(): Promise<AdminStudentRow[]> {
   const supabase = getAdminClient();
   const { data } = await supabase
     .from("students")
-    .select("*, group:groups(name, end_date, archived)")
+    .select("*, group:groups(name, start_date, end_date, archived)")
     .order("last_name");
-  return ((data as any[]) ?? []).map((row) => {
+  const rows = (data as any[]) ?? [];
+
+  // Lecții practice efectuate per cursant (o singură interogare).
+  const ids = rows.map((r) => r.id as string);
+  const doneByStudent = new Map<string, number>();
+  if (ids.length) {
+    const { data: ls } = await supabase
+      .from("lessons")
+      .select("student_id")
+      .eq("status", "completed")
+      .in("student_id", ids);
+    for (const l of (ls as { student_id: string }[]) ?? []) {
+      doneByStudent.set(l.student_id, (doneByStudent.get(l.student_id) ?? 0) + 1);
+    }
+  }
+
+  return rows.map((row) => {
     const { group, ...s } = row;
     const g = Array.isArray(group) ? group[0] : group;
+    const completedPractical = doneByStudent.get((s as Student).id) ?? 0;
     return {
       ...(s as Student),
       group_name: g?.name ?? null,
@@ -242,6 +386,8 @@ export async function getAdminStudents(): Promise<AdminStudentRow[]> {
       isArchived: g ? isGroupArchived(g) : false,
       daysLeft: daysUntil(g?.end_date ?? null),
       age: ageFromBirth((s as Student).birth_date),
+      completedPractical,
+      pace: computePace({ startDate: g?.start_date ?? null, endDate: g?.end_date ?? null, completedPractical }),
     };
   });
 }

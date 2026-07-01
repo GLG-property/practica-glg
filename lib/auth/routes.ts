@@ -9,5 +9,9 @@ export function homePathForRole(role: UserRole): string {
       return "/operator";
     case "instructor":
       return "/instructor";
+    case "theory":
+      return "/theory";
+    case "examiner":
+      return "/examiner";
   }
 }

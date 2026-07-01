@@ -9,13 +9,15 @@ import type { AdminStudentRow } from "@/lib/db/queries";
 
 type SortKey = "alpha" | "daysLeft";
 type AgeBucket = "all" | "u25" | "m" | "o40";
+type PaceFilter = "all" | "behind" | "critical";
 
 export function StudentsListClient({ students }: { students: AdminStudentRow[] }) {
-  const { d, fmt } = useI18n();
+  const { d } = useI18n();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"active" | "archived">("active");
   const [groupId, setGroupId] = useState("");
   const [ageBucket, setAgeBucket] = useState<AgeBucket>("all");
+  const [pace, setPace] = useState<PaceFilter>("all");
   const [sort, setSort] = useState<SortKey>("alpha");
 
   // Grupele prezente (pentru filtrul după grupă).
@@ -34,11 +36,17 @@ export function StudentsListClient({ students }: { students: AdminStudentRow[] }
       if (ageBucket === "m") return age >= 25 && age <= 40;
       return age > 40;
     };
+    const inPace = (p: AdminStudentRow["pace"]) => {
+      if (pace === "all") return true;
+      if (pace === "critical") return p === "critical";
+      return p === "behind" || p === "critical"; // „în urmă" include și „risc"
+    };
     const filtered = students.filter(
       (s) =>
         (view === "archived" ? s.isArchived : !s.isArchived) &&
         (!groupId || s.group_id === groupId) &&
         inAge(s.age) &&
+        inPace(s.pace) &&
         (!q || studentName(s).toLowerCase().includes(q))
     );
     const big = 9e9;
@@ -47,7 +55,7 @@ export function StudentsListClient({ students }: { students: AdminStudentRow[] }
         ? studentName(a).localeCompare(studentName(b))
         : (a.daysLeft ?? big) - (b.daysLeft ?? big)
     );
-  }, [students, query, view, groupId, ageBucket, sort]);
+  }, [students, query, view, groupId, ageBucket, pace, sort]);
 
   return (
     <div className="space-y-4">
@@ -87,8 +95,8 @@ export function StudentsListClient({ students }: { students: AdminStudentRow[] }
         />
       </div>
 
-      {/* Filtre: grupă, vârstă, sortare */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      {/* Filtre: grupă, vârstă, ritm, sortare */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <select value={groupId} onChange={(e) => setGroupId(e.target.value)} className="input h-9 py-0 text-sm">
           <option value="">{d.filters.group}: {d.filters.all}</option>
           {groupOptions.map(([id, name]) => (
@@ -100,6 +108,11 @@ export function StudentsListClient({ students }: { students: AdminStudentRow[] }
           <option value="u25">{d.filters.ageU25}</option>
           <option value="m">{d.filters.age2540}</option>
           <option value="o40">{d.filters.ageO40}</option>
+        </select>
+        <select value={pace} onChange={(e) => setPace(e.target.value as PaceFilter)} className="input h-9 py-0 text-sm">
+          <option value="all">{d.pace.label}: {d.filters.all}</option>
+          <option value="behind">{d.pace.behind}</option>
+          <option value="critical">{d.pace.critical}</option>
         </select>
         <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="input h-9 py-0 text-sm">
           <option value="alpha">{d.filters.sort}: {d.filters.alpha}</option>
@@ -155,6 +168,16 @@ function StudentRow({ s }: { s: AdminStudentRow }) {
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        {s.pace === "critical" && (
+          <span className="rounded-lg bg-status-noshow/10 px-2 py-1 text-xs font-semibold text-status-noshow">
+            {d.pace.critical}
+          </span>
+        )}
+        {s.pace === "behind" && (
+          <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">
+            {d.pace.behind}
+          </span>
+        )}
         {daysText && <span className={`rounded-lg px-2 py-1 text-xs font-semibold ${daysCls}`}>{daysText}</span>}
         <Icon name="next" size={18} className="text-slate-400" />
       </div>

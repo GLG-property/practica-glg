@@ -10,9 +10,10 @@ import { createGroupAction, setGroupArchivedAction } from "@/app/admin/actions/g
 import type { GroupRow } from "@/lib/db/queries";
 
 type SortKey = "soonest" | "newest" | "alpha";
+export type TeacherOpt = { id: string; name: string };
 
-export function GroupsClient({ groups }: { groups: GroupRow[] }) {
-  const { d, fmt } = useI18n();
+export function GroupsClient({ groups, teachers }: { groups: GroupRow[]; teachers: TeacherOpt[] }) {
+  const { d } = useI18n();
   const [adding, setAdding] = useState(false);
   const [view, setView] = useState<"active" | "archived">("active");
   const [sort, setSort] = useState<SortKey>("soonest");
@@ -39,7 +40,7 @@ export function GroupsClient({ groups }: { groups: GroupRow[] }) {
         )}
       </div>
 
-      {adding && <GroupForm onClose={() => setAdding(false)} />}
+      {adding && <GroupForm teachers={teachers} onClose={() => setAdding(false)} />}
 
       {/* Active / Arhivă + sortare */}
       <div className="flex flex-wrap items-center gap-2">
@@ -149,7 +150,7 @@ function GroupCard({ group: g }: { group: GroupRow }) {
   );
 }
 
-function GroupForm({ onClose }: { onClose: () => void }) {
+function GroupForm({ teachers, onClose }: { teachers: TeacherOpt[]; onClose: () => void }) {
   const { d } = useI18n();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -178,8 +179,16 @@ function GroupForm({ onClose }: { onClose: () => void }) {
         <input id="name" name="name" className="input" required />
       </div>
       <div>
-        <label className="label" htmlFor="theory_teacher">{d.students.theoryTeacher}</label>
-        <input id="theory_teacher" name="theory_teacher" className="input" />
+        <label className="label" htmlFor="theory_teacher_id">{d.students.theoryTeacher}</label>
+        <select id="theory_teacher_id" name="theory_teacher_id" className="input" defaultValue="">
+          <option value="">{d.common.none}</option>
+          {teachers.map((t) => (
+            <option key={t.id} value={t.id}>{t.name}</option>
+          ))}
+        </select>
+        {teachers.length === 0 && (
+          <p className="mt-1 text-xs text-slate-400">{d.nav.theoryTeachers}: —</p>
+        )}
       </div>
       <div>
         <label className="label">{d.filters.period}</label>

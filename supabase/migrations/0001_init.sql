@@ -26,7 +26,7 @@ drop type if exists
   cascade;
 
 -- ---------- Tipuri enumerate ----------
-do $$ begin create type user_role as enum ('admin','operator','instructor'); exception when duplicate_object then null; end $$;
+do $$ begin create type user_role as enum ('admin','operator','instructor','theory','examiner'); exception when duplicate_object then null; end $$;
 do $$ begin create type transmission as enum ('manual','automatic'); exception when duplicate_object then null; end $$;
 do $$ begin create type car_stage as enum ('beginner','advanced'); exception when duplicate_object then null; end $$;
 do $$ begin create type lesson_status as enum ('scheduled','completed','no_show','cancelled'); exception when duplicate_object then null; end $$;

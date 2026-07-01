@@ -25,6 +25,10 @@ import {
   TbPencil,
   TbFileText,
   TbHistory,
+  TbClipboardCheck,
+  TbSchool,
+  TbAward,
+  TbCalendarX,
 } from "react-icons/tb";
 
 // Set de iconuri Tabler. Păstrăm API-ul <Icon name=... />. Pentru a comuta la alt set
@@ -52,7 +56,11 @@ export type IconName =
   | "alert"
   | "edit"
   | "report"
-  | "history";
+  | "history"
+  | "exam"
+  | "teacher"
+  | "award"
+  | "absent";
 
 const MAP: Record<IconName, IconType> = {
   home: TbHome,
@@ -78,6 +86,10 @@ const MAP: Record<IconName, IconType> = {
   edit: TbPencil,
   report: TbFileText,
   history: TbHistory,
+  exam: TbClipboardCheck,
+  teacher: TbSchool,
+  award: TbAward,
+  absent: TbCalendarX,
 };
 
 export function Icon({

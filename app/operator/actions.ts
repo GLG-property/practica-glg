@@ -119,6 +119,82 @@ export async function getInstructorMonthAction(instructorId: string, monthIso: s
   return [...counts.entries()].map(([date, count]) => ({ date, count }));
 }
 
+const reassignSchema = z.object({
+  studentId: z.string().uuid(),
+  phase: z.union([z.literal(1), z.literal(2)]),
+  instructorId: z.string().uuid(),
+});
+
+/**
+ * Operatorul mută un cursant pe alt instructor pe o fază (schimbări / concedii).
+ * Orele rămân (se numără pe fază, nu pe instructor). Lecțiile VIITOARE programate
+ * ale acestei atribuiri se mută pe noul instructor + mașină.
+ */
+export async function reassignInstructorOperatorAction(input: {
+  studentId: string;
+  phase: 1 | 2;
+  instructorId: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const s = await requireOperator();
+  const parsed = reassignSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  const owns = await operatorOwnsStudent(s.id, parsed.data.studentId);
+  if (!owns) return { ok: false, error: "forbidden" };
+
+  const supabase = getAdminClient();
+
+  // Noul instructor + mașina lui (trebuie activ, categoria B).
+  const { data: instr } = await supabase
+    .from("users")
+    .select("id, active, assigned_car_id, car:cars(category)")
+    .eq("id", parsed.data.instructorId)
+    .eq("role", "instructor")
+    .single();
+  if (!instr || !(instr as { active: boolean }).active) return { ok: false, error: "error" };
+  const car = (instr as unknown as { car: { category: string } | null }).car;
+  if (!car || car.category !== "B") return { ok: false, error: "ineligible" };
+  const newCarId = (instr as { assigned_car_id: string | null }).assigned_car_id;
+
+  // Atribuirea existentă pentru fază.
+  const { data: assignment } = await supabase
+    .from("student_instructors")
+    .select("id")
+    .eq("student_id", parsed.data.studentId)
+    .eq("phase", parsed.data.phase)
+    .maybeSingle();
+  if (!assignment) return { ok: false, error: "no_assignment" };
+  const assignmentId = (assignment as { id: string }).id;
+
+  // Actualizăm atribuirea (instructor + mașină). Orele rămân (sunt pe fază).
+  const { error: upErr } = await supabase
+    .from("student_instructors")
+    .update({ instructor_id: parsed.data.instructorId, car_id: newCarId })
+    .eq("id", assignmentId);
+  if (upErr) return { ok: false, error: "error" };
+
+  // Mutăm lecțiile VIITOARE programate pe noul instructor + mașină.
+  const nowIso = new Date().toISOString();
+  await supabase
+    .from("lessons")
+    .update({ instructor_id: parsed.data.instructorId, car_id: newCarId })
+    .eq("assignment_id", assignmentId)
+    .eq("status", "scheduled")
+    .gt("start_time", nowIso);
+
+  await audit({
+    userId: s.id,
+    action: "student.reassign_instructor",
+    entity: "student",
+    entityId: parsed.data.studentId,
+    details: { phase: parsed.data.phase, instructor_id: parsed.data.instructorId },
+  });
+  revalidatePath("/operator/students/" + parsed.data.studentId);
+  revalidatePath("/operator/schedule/" + parsed.data.studentId);
+  revalidatePath("/operator/calendar");
+  return { ok: true };
+}
+
 const paidSchema = z.object({
   studentId: z.string().uuid(),
   hours: z.number().min(0).max(1000),

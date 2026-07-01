@@ -13,6 +13,8 @@ import { loginAction } from "./actions";
 const ROLES: { role: UserRole; icon: IconName }[] = [
   { role: "instructor", icon: "car" },
   { role: "operator", icon: "calendar" },
+  { role: "theory", icon: "teacher" },
+  { role: "examiner", icon: "award" },
   { role: "admin", icon: "settings" },
 ];
 
